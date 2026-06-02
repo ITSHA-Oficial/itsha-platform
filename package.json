@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r --filter @itsha/shared run build && pnpm -r --filter @itsha/backend run build",
+    "dev:backend": "pnpm --filter @itsha/backend run dev",
+    "dev:frontend": "pnpm --filter @itsha/frontend run dev"
+  }
+}

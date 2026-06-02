@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+
+# Archivos de entorno (CONTRA LA REGLA 1 DE SEGURIDAD)
+.env
+.env.local
+.env.*.local
+
+# Compilación de TypeScript
+*.tsbuildinfo
+dist/
+
+# Logs
+logs
+*.log
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
