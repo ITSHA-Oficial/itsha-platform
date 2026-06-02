@@ -36,14 +36,18 @@ app.get('/health/live', (_req: Request, res: Response) => {
 app.get('/health/db', async (_req: Request, res: Response) => {
   try {
     const supabase = getSupabaseClient();
+    const slug = process.env.TENANT_SLUG || 'lrimprenta';
 
     const { data, error } = await supabase
       .from('tenants')
       .select('id, name, slug, created_at')
-      .limit(1)
-      .single();
+      .eq('slug', slug)
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ status: 'error', message: `Tenant '${slug}' no encontrado` });
+    }
 
     res.json({ status: 'connected', tenant: data });
   } catch (err: any) {
