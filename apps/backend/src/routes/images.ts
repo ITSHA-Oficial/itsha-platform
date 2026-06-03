@@ -70,19 +70,16 @@ router.post('/products/:productId/images', upload.single('file'), async (req: Re
       .upload(filePath, processedBuffer, { contentType: 'image/webp', upsert: true });
 
     if (uploadError) {
-      // Limpiar el registro si falla la subida
       await supabase.from('product_images').delete().eq('id', imageRecord.id);
       return res.status(500).json({
         error: { code: 'STORAGE_ERROR', message: 'Error al subir la imagen.' }
       });
     }
 
-    // Obtener URL pública
     const { data: publicUrl } = supabase.storage
       .from('product-images')
       .getPublicUrl(filePath);
 
-    // Actualizar la URL en el registro
     const { data: updatedImage, error: updateError } = await supabase
       .from('product_images')
       .update({ url: publicUrl.publicUrl })
@@ -102,6 +99,68 @@ router.post('/products/:productId/images', upload.single('file'), async (req: Re
     return res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' }
     });
+  }
+});
+
+// PUT /api/v1/images/:id/primary
+router.put('/images/:id/primary', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { id } = req.params;
+
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({ error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere el header X-Tenant-Slug.' } });
+    }
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', tenantSlug)
+      .eq('active', true)
+      .single();
+
+    if (tenantError || !tenant) {
+      return res.status(404).json({ error: { code: 'TENANT_NOT_FOUND', message: 'El tenant no existe o está inactivo.' } });
+    }
+
+    // Obtener la imagen y su product_id
+    const { data: image, error: imageError } = await supabase
+      .from('product_images')
+      .select('id, product_id')
+      .eq('id', id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null)
+      .single();
+
+    if (imageError || !image) {
+      return res.status(404).json({ error: { code: 'IMAGE_NOT_FOUND', message: 'Imagen no encontrada.' } });
+    }
+
+    // Desmarcar todas las imágenes del producto
+    await supabase
+      .from('product_images')
+      .update({ is_primary: false })
+      .eq('product_id', image.product_id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null);
+
+    // Marcar esta como primaria
+    const { data: updated, error: updateError } = await supabase
+      .from('product_images')
+      .update({ is_primary: true })
+      .eq('id', id)
+      .select('id, url, alt_text, sort_order, is_primary')
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({ error: { code: 'DB_ERROR', message: 'Error al actualizar la imagen.' } });
+    }
+
+    return res.json(updated);
+  } catch (err: any) {
+    console.error('Error en PUT /images/:id/primary:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' } });
   }
 });
 

@@ -60,6 +60,18 @@ export default function ImageUploader({ productId }: ImageUploaderProps) {
     }
   };
 
+  const handleSetPrimary = async (imageId: string) => {
+    try {
+      await fetch(`${API_URL}/api/v1/images/${imageId}/primary`, {
+        method: 'PUT',
+        headers: { 'X-Tenant-Slug': TENANT_SLUG }
+      });
+      fetchImages();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleDelete = async (imageId: string) => {
     if (!confirm('¿Eliminar esta imagen?')) return;
     try {
@@ -94,12 +106,28 @@ export default function ImageUploader({ productId }: ImageUploaderProps) {
           {images.map(img => (
             <div key={img.id} className="relative bg-gray-100 rounded-lg overflow-hidden group">
               <img src={img.url} alt={img.alt_text || ''} className="w-full h-32 object-cover" />
-              <button
-                onClick={() => handleDelete(img.id)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                ×
-              </button>
+              <div className="absolute top-1 right-1 flex gap-1">
+                <button
+                  onClick={() => handleSetPrimary(img.id)}
+                  className={`rounded-full w-6 h-6 text-xs flex items-center justify-center ${
+                    img.is_primary ? 'bg-yellow-400 text-white' : 'bg-white text-gray-500 hover:bg-yellow-100'
+                  }`}
+                  title="Marcar como principal"
+                >
+                  ★
+                </button>
+                <button
+                  onClick={() => handleDelete(img.id)}
+                  className="bg-red-500 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                >
+                  ×
+                </button>
+              </div>
+              {img.is_primary && (
+                <div className="absolute bottom-0 left-0 right-0 bg-yellow-400 text-white text-xs text-center py-0.5">
+                  Principal
+                </div>
+              )}
             </div>
           ))}
         </div>
