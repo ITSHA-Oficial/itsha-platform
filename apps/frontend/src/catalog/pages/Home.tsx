@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useCatalog from '../hooks/useCatalog';
 import ProductCard from '../components/ProductCard';
 import CategoryMenu from '../components/CategoryMenu';
@@ -13,7 +13,7 @@ export default function Home() {
   const [isFiltering, setIsFiltering] = useState(false);
 
   // Cuando los productos cargan, inicializamos el filtro
-  useState(() => {
+  useEffect(() => {
     setFilteredProducts(products);
   }, [products]);
 
