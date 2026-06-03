@@ -9,6 +9,7 @@ export default function ExcelImport() {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
+  const [replaceAll, setReplaceAll] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -55,7 +56,11 @@ export default function ExcelImport() {
     try {
       const res = await fetch(`${API_URL}/api/v1/excel/confirm/${importId}`, {
         method: 'POST',
-        headers: { 'X-Tenant-Slug': TENANT_SLUG }
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Tenant-Slug': TENANT_SLUG
+        },
+        body: JSON.stringify({ replace: replaceAll })
       });
 
       if (!res.ok) {
@@ -142,12 +147,33 @@ export default function ExcelImport() {
               </div>
             </div>
 
+            <div className="flex items-center gap-2 mt-4">
+              <input
+                type="checkbox"
+                id="replaceAll"
+                checked={replaceAll}
+                onChange={e => setReplaceAll(e.target.checked)}
+                className="w-4 h-4 text-blue-600"
+              />
+              <label htmlFor="replaceAll" className="text-sm text-gray-700 font-medium">
+                Reemplazar catálogo completo (eliminar todos los productos existentes)
+              </label>
+            </div>
+
             <button
               onClick={handleConfirm}
               disabled={confirming}
-              className="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+              className={`w-full py-2 rounded-lg text-sm font-medium text-white transition-colors ${
+                replaceAll
+                  ? 'bg-red-600 hover:bg-red-700'
+                  : 'bg-green-600 hover:bg-green-700'
+              } disabled:opacity-50`}
             >
-              {confirming ? 'Aplicando cambios...' : 'Confirmar importación'}
+              {confirming
+                ? 'Aplicando cambios...'
+                : replaceAll
+                  ? 'Reemplazar catálogo completo'
+                  : 'Confirmar importación'}
             </button>
           </div>
         )}

@@ -7,6 +7,7 @@ router.post('/:importId', async (req: Request, res: Response) => {
   try {
     const supabase = getSupabaseClient();
     const { importId } = req.params;
+    const { replace } = req.body; // true si el usuario marcó "Reemplazar catálogo completo"
 
     // Obtener el diff almacenado
     const { data: importData, error: importError } = await supabase
@@ -21,17 +22,32 @@ router.post('/:importId', async (req: Request, res: Response) => {
       });
     }
 
+    const tenantId = importData.tenant_id;
     const diff = importData.diff_data;
+
+    // Si se solicita reemplazo, eliminar (soft delete) todos los productos activos del tenant
+    if (replace === true) {
+      // Soft delete para productos, features, attributes, variants, variant_attributes, product_images
+      const tables = ['product_images', 'variant_attributes', 'variants', 'attributes', 'features', 'products'];
+      for (const table of tables) {
+        await supabase
+          .from(table)
+          .update({ deleted_at: new Date().toISOString() })
+          .eq('tenant_id', tenantId)
+          .is('deleted_at', null);
+      }
+    }
+
     let productsAdded = 0;
     let productsUpdated = 0;
 
-    // Procesar productos
+    // Procesar productos del Excel
     for (const product of (diff.products || [])) {
       const { data: existingProduct } = await supabase
         .from('products')
         .select('id')
         .eq('sku', product.sku)
-        .eq('tenant_id', importData.tenant_id)
+        .eq('tenant_id', tenantId)
         .is('deleted_at', null)
         .maybeSingle();
 
@@ -50,19 +66,17 @@ router.post('/:importId', async (req: Request, res: Response) => {
         productsUpdated++;
       } else {
         // Crear nuevo producto
-        const { data: newProduct } = await supabase
+        await supabase
           .from('products')
           .insert({
-            tenant_id: importData.tenant_id,
+            tenant_id: tenantId,
             sku: product.sku,
             name: product.name,
             description: product.description,
             pricing_mode: product.pricing_mode,
             display_price_mode: product.display_price_mode,
             is_active: product.is_active
-          })
-          .select('id')
-          .single();
+          });
         productsAdded++;
       }
     }
@@ -73,9 +87,13 @@ router.post('/:importId', async (req: Request, res: Response) => {
       .delete()
       .eq('id', importId);
 
+    const message = replace
+      ? `Catálogo reemplazado. ${productsAdded} productos creados, ${productsUpdated} actualizados.`
+      : `Importación aplicada. ${productsAdded} productos creados, ${productsUpdated} actualizados.`;
+
     return res.json({
       status: 'confirmed',
-      message: `Importación aplicada. ${productsAdded} productos creados, ${productsUpdated} actualizados.`,
+      message,
       products_added: productsAdded,
       products_updated: productsUpdated
     });
