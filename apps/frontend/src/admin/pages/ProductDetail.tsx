@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 import FeatureEditor from '../components/FeatureEditor';
 import VariantEditor from '../components/VariantEditor';
+import ImageUploader from '../components/ImageUploader';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -11,7 +12,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'features' | 'variants'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'features' | 'variants' | 'images'>('info');
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -62,6 +63,7 @@ export default function ProductDetail() {
     { id: 'info', label: 'Información general' },
     { id: 'features', label: 'Características' },
     { id: 'variants', label: 'Variantes' },
+    { id: 'images', label: 'Imágenes' },
   ];
 
   if (loading) {
@@ -170,6 +172,13 @@ export default function ProductDetail() {
           ) : (
             <VariantEditor productId={id!} />
           )}
+        </div>
+      )}
+
+      {activeTab === 'images' && (
+        <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl">
+          <h3 className="font-semibold text-gray-800 mb-4">Imágenes</h3>
+          <ImageUploader productId={id!} />
         </div>
       )}
     </div>

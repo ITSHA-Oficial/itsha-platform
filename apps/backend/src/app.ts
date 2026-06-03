@@ -93,6 +93,9 @@ app.use('/api/v1', featureRoutes);
 import variantRoutes from './routes/variants';
 app.use('/api/v1', variantRoutes);
 
+import imageRoutes from './routes/images';
+app.use('/api/v1', imageRoutes);
+
 import excelExportRoutes from './routes/excelExport';
 app.use('/api/v1/excel/export', excelExportRoutes);
 
