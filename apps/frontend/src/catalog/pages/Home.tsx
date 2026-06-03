@@ -1,8 +1,49 @@
+import { useState } from 'react';
 import useCatalog from '../hooks/useCatalog';
 import ProductCard from '../components/ProductCard';
+import CategoryMenu from '../components/CategoryMenu';
+import SearchBar from '../components/SearchBar';
+import { fetchCatalogData } from '../utils/api';
 
 export default function Home() {
-  const { products, tenant, loading, error } = useCatalog();
+  const { products, categories, tenant, loading, error } = useCatalog();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
+  const [isFiltering, setIsFiltering] = useState(false);
+
+  // Cuando los productos cargan, inicializamos el filtro
+  useState(() => {
+    setFilteredProducts(products);
+  }, [products]);
+
+  const handleCategorySelect = (slug: string | null) => {
+    setSelectedCategory(slug);
+    applyFilters(slug, searchQuery);
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    applyFilters(selectedCategory, query);
+  };
+
+  const applyFilters = (categorySlug: string | null, query: string) => {
+    let filtered = [...products];
+
+    if (categorySlug) {
+      filtered = filtered.filter(p => p.category_slug === categorySlug);
+    }
+
+    if (query) {
+      const q = query.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q)
+      );
+    }
+
+    setFilteredProducts(filtered);
+  };
 
   if (loading) {
     return (
@@ -42,13 +83,20 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {products.length === 0 ? (
+        <SearchBar onSearch={handleSearch} />
+        <CategoryMenu
+          categories={categories}
+          selected={selectedCategory}
+          onSelect={handleCategorySelect}
+        />
+
+        {filteredProducts.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-gray-400 text-lg">No hay productos disponibles.</p>
+            <p className="text-gray-400 text-lg">No se encontraron productos.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.map((product: any) => (
+            {filteredProducts.map((product: any) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
