@@ -69,7 +69,7 @@ export default function App() {
             <Layout><ProductDetail /></Layout>
           </ProtectedRoute>
         } />
-        <Route path="/admin/excel-import" element={
+        <Route path="/admin/excel/import" element={
           <ProtectedRoute requiredRole="admin">
             <Layout><ExcelImport /></Layout>
           </ProtectedRoute>
