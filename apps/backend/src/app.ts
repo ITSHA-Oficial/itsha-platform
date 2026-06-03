@@ -99,6 +99,9 @@ app.use('/api/v1/excel/export', excelExportRoutes);
 import excelConfirmRoutes from './routes/excelConfirm';
 app.use('/api/v1/excel/confirm', excelConfirmRoutes);
 
+import excelImportRoutes from './routes/excelImport';
+app.use('/api/v1/excel/import', excelImportRoutes);
+
 import auditRoutes from './routes/audit';
 app.use('/api/v1/audit', auditRoutes);
 
