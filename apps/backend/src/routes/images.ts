@@ -164,4 +164,56 @@ router.put('/images/:id/primary', async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /api/v1/images/:id
+router.delete('/images/:id', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { id } = req.params;
+
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({ error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere el header X-Tenant-Slug.' } });
+    }
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', tenantSlug)
+      .eq('active', true)
+      .single();
+
+    if (tenantError || !tenant) {
+      return res.status(404).json({ error: { code: 'TENANT_NOT_FOUND', message: 'El tenant no existe o está inactivo.' } });
+    }
+
+    // Verificar que la imagen existe y pertenece al tenant
+    const { data: image, error: imageError } = await supabase
+      .from('product_images')
+      .select('id, url')
+      .eq('id', id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null)
+      .single();
+
+    if (imageError || !image) {
+      return res.status(404).json({ error: { code: 'IMAGE_NOT_FOUND', message: 'Imagen no encontrada.' } });
+    }
+
+    // Soft delete: marcar como eliminada en la BD
+    const { error: deleteError } = await supabase
+      .from('product_images')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (deleteError) {
+      return res.status(500).json({ error: { code: 'DB_ERROR', message: 'Error al eliminar la imagen.' } });
+    }
+
+    return res.json({ message: 'Imagen eliminada correctamente.' });
+  } catch (err: any) {
+    console.error('Error en DELETE /images/:id:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' } });
+  }
+});
+
 export default router;
