@@ -7,7 +7,7 @@ router.post('/:importId', async (req: Request, res: Response) => {
   try {
     const supabase = getSupabaseClient();
     const { importId } = req.params;
-    const { replace } = req.body; // true si el usuario marcó "Reemplazar catálogo completo"
+    const { replace } = req.body;
 
     // Obtener el diff almacenado
     const { data: importData, error: importError } = await supabase
@@ -27,7 +27,6 @@ router.post('/:importId', async (req: Request, res: Response) => {
 
     // Si se solicita reemplazo, eliminar (soft delete) todos los productos activos del tenant
     if (replace === true) {
-      // Soft delete para productos, features, attributes, variants, variant_attributes, product_images
       const tables = ['product_images', 'variant_attributes', 'variants', 'attributes', 'features', 'products'];
       for (const table of tables) {
         await supabase
@@ -40,8 +39,10 @@ router.post('/:importId', async (req: Request, res: Response) => {
 
     let productsAdded = 0;
     let productsUpdated = 0;
+    let featuresAdded = 0;
+    let variantsAdded = 0;
 
-    // Procesar productos del Excel
+    // Procesar productos
     for (const product of (diff.products || [])) {
       const { data: existingProduct } = await supabase
         .from('products')
@@ -51,8 +52,10 @@ router.post('/:importId', async (req: Request, res: Response) => {
         .is('deleted_at', null)
         .maybeSingle();
 
+      let productId: string;
+
       if (existingProduct) {
-        // Actualizar producto existente
+        productId = existingProduct.id;
         await supabase
           .from('products')
           .update({
@@ -65,8 +68,7 @@ router.post('/:importId', async (req: Request, res: Response) => {
           .eq('id', existingProduct.id);
         productsUpdated++;
       } else {
-        // Crear nuevo producto
-        await supabase
+        const { data: newProduct } = await supabase
           .from('products')
           .insert({
             tenant_id: tenantId,
@@ -76,8 +78,74 @@ router.post('/:importId', async (req: Request, res: Response) => {
             pricing_mode: product.pricing_mode,
             display_price_mode: product.display_price_mode,
             is_active: product.is_active
-          });
+          })
+          .select('id')
+          .single();
+        productId = newProduct?.id || '';
         productsAdded++;
+      }
+
+      // Procesar features para este producto (por SKU)
+      const productFeatures = (diff.features || []).filter((f: any) => f.product_sku === product.sku);
+      for (const feature of productFeatures) {
+        // Verificar si la feature ya existe
+        const { data: existingFeature } = await supabase
+          .from('features')
+          .select('id')
+          .eq('product_id', productId)
+          .eq('name', feature.name)
+          .eq('tenant_id', tenantId)
+          .is('deleted_at', null)
+          .maybeSingle();
+
+        let featureId: string;
+
+        if (existingFeature) {
+          featureId = existingFeature.id;
+          await supabase
+            .from('features')
+            .update({ sort_order: feature.sort_order })
+            .eq('id', existingFeature.id);
+        } else {
+          const { data: newFeature } = await supabase
+            .from('features')
+            .insert({
+              tenant_id: tenantId,
+              product_id: productId,
+              name: feature.name,
+              sort_order: feature.sort_order
+            })
+            .select('id')
+            .single();
+          featureId = newFeature?.id || '';
+          featuresAdded++;
+        }
+
+        // Procesar atributos para esta feature
+        const featureAttributes = (diff.attributes || []).filter(
+          (a: any) => a.feature_name === feature.name && a.product_sku === product.sku
+        );
+        for (const attr of featureAttributes) {
+          const { data: existingAttr } = await supabase
+            .from('attributes')
+            .select('id')
+            .eq('feature_id', featureId)
+            .eq('value', attr.value)
+            .eq('tenant_id', tenantId)
+            .is('deleted_at', null)
+            .maybeSingle();
+
+          if (!existingAttr) {
+            await supabase
+              .from('attributes')
+              .insert({
+                tenant_id: tenantId,
+                feature_id: featureId,
+                value: attr.value,
+                sort_order: attr.sort_order
+              });
+          }
+        }
       }
     }
 
@@ -88,14 +156,16 @@ router.post('/:importId', async (req: Request, res: Response) => {
       .eq('id', importId);
 
     const message = replace
-      ? `Catálogo reemplazado. ${productsAdded} productos creados, ${productsUpdated} actualizados.`
-      : `Importación aplicada. ${productsAdded} productos creados, ${productsUpdated} actualizados.`;
+      ? `Catálogo reemplazado. ${productsAdded} productos, ${featuresAdded} features, ${variantsAdded} variantes.`
+      : `Importación aplicada. ${productsAdded} productos, ${featuresAdded} features, ${variantsAdded} variantes.`;
 
     return res.json({
       status: 'confirmed',
       message,
       products_added: productsAdded,
-      products_updated: productsUpdated
+      products_updated: productsUpdated,
+      features_added: featuresAdded,
+      variants_added: variantsAdded
     });
   } catch (err: any) {
     console.error('Error en POST /excel/confirm:', err);
