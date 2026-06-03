@@ -65,6 +65,15 @@ router.get('/', async (req: Request, res: Response) => {
         .eq('product_id', product.id)
         .is('deleted_at', null);
 
+      // Obtener la imagen primaria del producto
+      const { data: primaryImage } = await supabase
+        .from('product_images')
+        .select('url')
+        .eq('product_id', product.id)
+        .eq('is_primary', true)
+        .is('deleted_at', null)
+        .maybeSingle();
+
       const category = categories?.find(c => c.id === product.category_id);
 
       return {
@@ -72,7 +81,7 @@ router.get('/', async (req: Request, res: Response) => {
         category_slug: category ? category.slug : null,
         features: featuresWithAttrs,
         variants: variants || [],
-        primary_image_url: null
+        primary_image_url: primaryImage?.url || null  // ← AHORA SÍ OBTIENE LA IMAGEN REAL
       };
     })) : [];
 
