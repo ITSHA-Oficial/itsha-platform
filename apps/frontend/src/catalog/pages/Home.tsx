@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useCatalog from '../hooks/useCatalog';
 import ProductCard from '../components/ProductCard';
 import CategoryMenu from '../components/CategoryMenu';
@@ -6,6 +7,7 @@ import SearchBar from '../components/SearchBar';
 import { fetchCatalogData } from '../utils/api';
 
 export default function Home() {
+  const navigate = useNavigate();
   const { products, categories, tenant, loading, error } = useCatalog();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [lastQuery, setLastQuery] = useState('');
@@ -79,10 +81,12 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         <SearchBar
+          products={products}
           onSearch={(query) => {
             setLastQuery(query);
             applyFilters(selectedCategory, query);
           }}
+          onSelectProduct={(sku) => navigate(`/producto/${sku}`)}
         />
         <CategoryMenu
           categories={categories}
