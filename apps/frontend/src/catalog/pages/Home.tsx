@@ -83,7 +83,12 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar
+          products={products}
+          onSelectProduct={(sku) => {
+          window.location.href = `/producto/${sku}`;
+        }}
+/>
         <CategoryMenu
           categories={categories}
           selected={selectedCategory}
