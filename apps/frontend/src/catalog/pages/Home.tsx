@@ -8,7 +8,7 @@ import { fetchCatalogData } from '../utils/api';
 export default function Home() {
   const { products, categories, tenant, loading, error } = useCatalog();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [lastQuery, setLastQuery] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [isFiltering, setIsFiltering] = useState(false);
 
@@ -19,12 +19,7 @@ export default function Home() {
 
   const handleCategorySelect = (slug: string | null) => {
     setSelectedCategory(slug);
-    applyFilters(slug, searchQuery);
-  };
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    applyFilters(selectedCategory, query);
+    applyFilters(slug, lastQuery);
   };
 
   const applyFilters = (categorySlug: string | null, query: string) => {
@@ -84,11 +79,11 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         <SearchBar
-          products={products}
-          onSelectProduct={(sku) => {
-          window.location.href = `/producto/${sku}`;
-        }}
-/>
+          onSearch={(query) => {
+            setLastQuery(query);
+            applyFilters(selectedCategory, query);
+          }}
+        />
         <CategoryMenu
           categories={categories}
           selected={selectedCategory}
