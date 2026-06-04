@@ -103,6 +103,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
               <SpecConfigurator
                 features={product.features || []}
                 variants={product.variants || []}
+                selectedOptions={selectedOptions}
                 onOptionsChange={setSelectedOptions}
               />
             ) : (
