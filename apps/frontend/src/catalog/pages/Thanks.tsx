@@ -22,7 +22,7 @@ export default function Thanks() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <p className="text-gray-500 mb-4">No se encontró información de la cotización.</p>
-          <button onClick={() => navigate('/')} className="text-blue-600 underline">Volver al inicio</button>
+          <button onClick={() => navigate('/')} className="text-primary underline">Volver al inicio</button>
         </div>
       </div>
     );
@@ -56,7 +56,7 @@ export default function Thanks() {
             href={pdfUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+            className="block w-full bg-primary text-white py-3 rounded-xl font-semibold transition-colors"
           >
             Descargar PDF
           </a>

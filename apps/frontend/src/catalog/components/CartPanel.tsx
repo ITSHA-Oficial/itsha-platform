@@ -27,7 +27,7 @@ export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose, 
           {items.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-400 text-lg mb-4">Tu carrito está vacío.</p>
-              <button onClick={() => { onClose(); navigate('/'); }} className="text-blue-600 underline">
+              <button onClick={() => { onClose(); navigate('/'); }} className="text-primary underline">
                 Explorar catálogo
               </button>
             </div>
@@ -79,7 +79,7 @@ export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose, 
             )}
             <button
               onClick={() => { onClose(); navigate('/cotizar'); }}
-              className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+              className="w-full bg-primary text-white py-3 rounded-xl font-semibold transition-colors"
             >
               Solicitar cotización
             </button>

@@ -75,7 +75,7 @@ export default function SearchBar({ products, onSearch, onSelectProduct }: Searc
           value={value}
           onChange={e => setValue(e.target.value)}
           placeholder="Buscar productos por nombre o SKU..."
-          className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[48px]"
+          className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[48px]"
         />
         {value && (
           <button

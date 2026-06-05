@@ -46,8 +46,8 @@ export default function SpecConfigurator({ features, variants, selectedOptions, 
                     onClick={() => handleSelect(feature.name, attr.value)}
                     className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors min-h-[48px] ${
                       isSelected
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-blue-400 hover:text-blue-600'
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-primary hover:text-primary'
                     }`}
                   >
                     {attr.value}

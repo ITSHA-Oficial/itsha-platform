@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+/* Utilidades dinámicas con el color primario */
+.bg-primary {
+  background-color: var(--primary-color, #1a56db);
+}
+.bg-primary:hover {
+  filter: brightness(0.9);
+}
+.bg-primary:disabled {
+  opacity: 0.5;
+}
+
+.text-primary {
+  color: var(--primary-color, #1a56db);
+}
+.text-primary:hover {
+  opacity: 0.8;
+}
+
+.border-primary {
+  border-color: var(--primary-color, #1a56db);
+}
+
+.ring-primary:focus {
+  --tw-ring-color: var(--primary-color, #1a56db);
+}

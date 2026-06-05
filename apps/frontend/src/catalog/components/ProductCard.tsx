@@ -26,7 +26,7 @@ export default function ProductCard({
   const renderPrice = () => {
     if (displayPriceMode === 'hidden') return null;
     if (displayPriceMode === 'contact_only') return (
-      <span className="text-sm text-blue-600 font-medium">Consultar precio</span>
+      <span className="text-sm text-primary font-medium">Consultar precio</span>
     );
     if (displayPriceMode === 'from_price' && minPrice !== undefined) return (
       <span className="text-lg font-bold text-green-600">Desde S/ {minPrice.toFixed(2)}</span>

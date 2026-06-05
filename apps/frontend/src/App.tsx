@@ -25,11 +25,20 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [showCartTotal, setShowCartTotal] = useState(true);
 
+  // Este código se ejecuta una sola vez cuando la página carga.
+  // Le pregunta al servidor por la configuración del tenant.
   useEffect(() => {
     fetchTenantSettings()
-      .then(data => setShowCartTotal(data.show_cart_total !== false))
-      .catch(console.error);
-  }, []);
+      .then(data => {
+        setShowCartTotal(data.show_cart_total !== false);
+        // data.primary_color es el color que guardó el dueño (ej: "#FF0000" para rojo)
+        if (data.primary_color) {
+          // Aquí creamos el lápiz mágico (variable CSS) con el color correcto
+          document.documentElement.style.setProperty('--primary-color', data.primary_color);
+        }
+      })
+      .catch(console.error); // Si falla, no pasa nada, se usarán los valores por defecto.
+  }, []); // El '[]' vacío significa "solo hazlo una vez al cargar la página".
 
   return (
     <BrowserRouter>

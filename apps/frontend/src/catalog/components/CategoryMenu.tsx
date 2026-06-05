@@ -106,6 +106,60 @@ export default function CategoryMenu({ categories, selected, onSelect, isOpen, o
             </button>
           ))}
         </div>
+
+        {socialLinks && (socialLinks.facebook_url || socialLinks.instagram_url || socialLinks.whatsapp || socialLinks.tiktok_url || socialLinks.address) && (
+          <div className="px-6 py-5 border-t bg-gray-50">
+            <p className="text-sm font-semibold text-gray-700 mb-3">Conecta con nosotros</p>
+            <div className="flex flex-wrap gap-3 mb-4">
+              {socialLinks.facebook_url && (
+                <a
+                  href={socialLinks.facebook_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700"
+                >
+                  <span>Facebook</span>
+                </a>
+              )}
+              {socialLinks.instagram_url && (
+                <a
+                  href={socialLinks.instagram_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-pink-500 text-white text-sm hover:bg-pink-600"
+                >
+                  <span>Instagram</span>
+                </a>
+              )}
+              {socialLinks.whatsapp && (
+                <a
+                  href={`https://wa.me/${socialLinks.whatsapp.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm hover:bg-emerald-700"
+                >
+                  <span>WhatsApp</span>
+                </a>
+              )}
+              {socialLinks.tiktok_url && (
+                <a
+                  href={socialLinks.tiktok_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-black text-white text-sm hover:bg-gray-900"
+                >
+                  <span>TikTok</span>
+                </a>
+              )}
+            </div>
+            {socialLinks.address && (
+              <div className="text-sm text-gray-600">
+                <p className="font-medium text-gray-800">Dirección</p>
+                <p>{socialLinks.address}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   );
