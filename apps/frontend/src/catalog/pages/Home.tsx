@@ -4,7 +4,7 @@ import useCatalog from '../hooks/useCatalog';
 import ProductCard from '../components/ProductCard';
 import CategoryMenu from '../components/CategoryMenu';
 import SearchBar from '../components/SearchBar';
-import { fetchCatalogData } from '../utils/api';
+import { fetchCatalogData, fetchTenantSettings } from '../utils/api';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -14,11 +14,18 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [isFiltering, setIsFiltering] = useState(false);
+  const [socialLinks, setSocialLinks] = useState<any>({});
 
   // Cuando los productos cargan, inicializamos el filtro
   useEffect(() => {
     setFilteredProducts(products);
   }, [products]);
+
+  useEffect(() => {
+    fetchTenantSettings()
+      .then(data => setSocialLinks(data))
+      .catch(console.error);
+  }, []);
 
   const handleCategorySelect = (slug: string | null) => {
     setSelectedCategory(slug);
@@ -103,6 +110,7 @@ export default function Home() {
         onSelect={handleCategorySelect}
         isOpen={menuOpen}
         onClose={() => setMenuOpen(false)}
+        socialLinks={socialLinks}
       />
 
       <main className="max-w-7xl mx-auto px-4 py-6">

@@ -6,6 +6,10 @@ export default function Settings() {
   const [whatsapp, setWhatsapp] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#1a56db');
   const [showCartTotal, setShowCartTotal] = useState(true);
+  const [facebookUrl, setFacebookUrl] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [tiktokUrl, setTiktokUrl] = useState('');
+  const [address, setAddress] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -17,6 +21,10 @@ export default function Settings() {
         setWhatsapp(data.whatsapp || '');
         setPrimaryColor(data.primary_color || '#1a56db');
         setShowCartTotal(data.show_cart_total !== false);
+        setFacebookUrl(data.facebook_url || '');
+        setInstagramUrl(data.instagram_url || '');
+        setTiktokUrl(data.tiktok_url || '');
+        setAddress(data.address || '');
       })
       .catch(console.error);
   }, []);
@@ -32,7 +40,11 @@ export default function Settings() {
           name,
           whatsapp,
           primary_color: primaryColor,
-          show_cart_total: showCartTotal
+          show_cart_total: showCartTotal,
+          facebook_url: facebookUrl,
+          instagram_url: instagramUrl,
+          tiktok_url: tiktokUrl,
+          address
         })
       });
       if (res.ok) {
@@ -68,6 +80,46 @@ export default function Settings() {
             value={whatsapp}
             onChange={e => setWhatsapp(e.target.value)}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Facebook URL</label>
+          <input
+            type="text"
+            value={facebookUrl}
+            onChange={e => setFacebookUrl(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="https://facebook.com/tunegocio"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Instagram URL</label>
+          <input
+            type="text"
+            value={instagramUrl}
+            onChange={e => setInstagramUrl(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="https://instagram.com/tunegocio"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">TikTok URL</label>
+          <input
+            type="text"
+            value={tiktokUrl}
+            onChange={e => setTiktokUrl(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="https://tiktok.com/@tunegocio"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+          <input
+            type="text"
+            value={address}
+            onChange={e => setAddress(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Av. Principal 123, Lima"
           />
         </div>
         <div className="flex items-start gap-3">

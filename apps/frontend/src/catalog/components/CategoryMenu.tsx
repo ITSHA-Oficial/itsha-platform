@@ -14,9 +14,16 @@ interface CategoryMenuProps {
   onSelect: (slug: string | null) => void;
   isOpen: boolean;
   onClose: () => void;
+  socialLinks?: {
+    facebook_url?: string;
+    instagram_url?: string;
+    whatsapp?: string;
+    tiktok_url?: string;
+    address?: string;
+  };
 }
 
-export default function CategoryMenu({ categories, selected, onSelect, isOpen, onClose }: CategoryMenuProps) {
+export default function CategoryMenu({ categories, selected, onSelect, isOpen, onClose, socialLinks }: CategoryMenuProps) {
   // Bloquear scroll del body cuando el menú está abierto
   useEffect(() => {
     if (isOpen) {
