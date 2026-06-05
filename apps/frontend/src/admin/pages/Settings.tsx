@@ -5,6 +5,7 @@ export default function Settings() {
   const [name, setName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#1a56db');
+  const [showCartTotal, setShowCartTotal] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -15,6 +16,7 @@ export default function Settings() {
         setName(data.name || '');
         setWhatsapp(data.whatsapp || '');
         setPrimaryColor(data.primary_color || '#1a56db');
+        setShowCartTotal(data.show_cart_total !== false);
       })
       .catch(console.error);
   }, []);
@@ -26,7 +28,12 @@ export default function Settings() {
       const res = await fetch(`${API_URL}/api/v1/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Tenant-Slug': TENANT_SLUG },
-        body: JSON.stringify({ name, whatsapp, primary_color: primaryColor })
+        body: JSON.stringify({
+          name,
+          whatsapp,
+          primary_color: primaryColor,
+          show_cart_total: showCartTotal
+        })
       });
       if (res.ok) {
         setMessage('Configuración guardada correctamente.');
@@ -62,6 +69,20 @@ export default function Settings() {
             onChange={e => setWhatsapp(e.target.value)}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+        </div>
+        <div className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => setShowCartTotal(!showCartTotal)}
+            className={`relative w-11 h-6 rounded-full transition-colors ${showCartTotal ? 'bg-blue-600' : 'bg-gray-200'}`}
+            aria-label="Mostrar total en el carrito"
+          >
+            <span className={`absolute left-1 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white shadow transition-transform ${showCartTotal ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+          <div>
+            <p className="text-sm font-medium text-gray-700">Mostrar total en el carrito</p>
+            <p className="text-sm text-gray-500">Muestra "S/ X.XX" en el panel del carrito.</p>
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Color primario</label>

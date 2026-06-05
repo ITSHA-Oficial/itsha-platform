@@ -43,4 +43,10 @@ export async function checkQuoteStatus(quoteId: string, token: string) {
   return res.json();
 }
 
+export async function fetchTenantSettings() {
+  const res = await fetch(`${API_URL}/api/v1/public/tenant/settings?slug=${TENANT_SLUG}`);
+  if (!res.ok) throw new Error('Error al cargar configuración');
+  return res.json();
+}
+
 export { API_URL, TENANT_SLUG };

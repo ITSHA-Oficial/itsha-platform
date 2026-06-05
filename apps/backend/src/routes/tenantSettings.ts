@@ -16,7 +16,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     const { data: tenant, error } = await supabase
       .from('tenants')
-      .select('name, logo_url, primary_color, whatsapp')
+      .select('name, logo_url, primary_color, whatsapp, show_cart_total')
       .eq('slug', slug)
       .eq('active', true)
       .single();
@@ -31,7 +31,8 @@ router.get('/', async (req: Request, res: Response) => {
       name: tenant.name,
       logo_url: tenant.logo_url,
       primary_color: tenant.primary_color,
-      whatsapp: tenant.whatsapp
+      whatsapp: tenant.whatsapp,
+      show_cart_total: tenant.show_cart_total
     });
   } catch (err: any) {
     console.error('Error en GET /tenant/settings:', err);

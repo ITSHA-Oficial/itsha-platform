@@ -60,7 +60,7 @@ router.put('/', async (req: Request, res: Response) => {
       });
     }
 
-    const { name, whatsapp, logo_url, primary_color } = req.body;
+    const { name, whatsapp, logo_url, primary_color, show_cart_total } = req.body;
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (whatsapp !== undefined) updateData.whatsapp = whatsapp;
@@ -73,6 +73,9 @@ router.put('/', async (req: Request, res: Response) => {
       }
       updateData.primary_color = primary_color.toLowerCase();
     }
+    if (show_cart_total !== undefined) {
+      updateData.show_cart_total = show_cart_total;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
@@ -84,7 +87,7 @@ router.put('/', async (req: Request, res: Response) => {
       .from('tenants')
       .update(updateData)
       .eq('id', tenant.id)
-      .select('name, slug, whatsapp, logo_url, primary_color, active')
+      .select('name, slug, whatsapp, logo_url, primary_color, active, show_cart_total')
       .single();
 
     if (error) throw error;

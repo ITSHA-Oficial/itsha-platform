@@ -6,9 +6,10 @@ interface CartPanelProps {
   onRemove: (index: number) => void;
   onUpdateQuantity: (index: number, quantity: number) => void;
   onClose: () => void;
+  showTotal: boolean;
 }
 
-export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose }: CartPanelProps) {
+export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose, showTotal }: CartPanelProps) {
   const navigate = useNavigate();
 
   const total = items.reduce((sum, item) => sum + (item.total_price || 0) * item.quantity, 0);
@@ -70,10 +71,12 @@ export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose }
 
         {items.length > 0 && (
           <div className="border-t px-6 py-4 space-y-3">
-            <div className="flex justify-between text-lg font-bold">
-              <span>Total</span>
-              <span>S/ {total.toFixed(2)}</span>
-            </div>
+            {showTotal && (
+              <div className="flex justify-between text-lg font-bold">
+                <span>Total</span>
+                <span>S/ {total.toFixed(2)}</span>
+              </div>
+            )}
             <button
               onClick={() => { onClose(); navigate('/cotizar'); }}
               className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"

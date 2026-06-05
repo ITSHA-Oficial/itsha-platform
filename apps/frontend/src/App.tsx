@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Home from './catalog/pages/Home'
 import CatalogProductDetail from './catalog/pages/ProductDetail'
 import Quote from './catalog/pages/Quote'
@@ -18,10 +18,18 @@ import QuoteRequests from './admin/pages/QuoteRequests'
 import Settings from './admin/pages/Settings'
 import Layout from './admin/components/Layout'
 import ProtectedRoute from './admin/components/ProtectedRoute'
+import { fetchTenantSettings } from './catalog/utils/api'
 
 export default function App() {
   const { items, addItem, removeItem, updateQuantity, clearCart, totalItems } = useCart();
   const [cartOpen, setCartOpen] = useState(false);
+  const [showCartTotal, setShowCartTotal] = useState(true);
+
+  useEffect(() => {
+    fetchTenantSettings()
+      .then(data => setShowCartTotal(data.show_cart_total !== false))
+      .catch(console.error);
+  }, []);
 
   return (
     <BrowserRouter>
@@ -38,6 +46,7 @@ export default function App() {
                 onRemove={removeItem}
                 onUpdateQuantity={updateQuantity}
                 onClose={() => setCartOpen(false)}
+                showTotal={showCartTotal}
               />
             )}
             <Home />
