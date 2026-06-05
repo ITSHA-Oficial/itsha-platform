@@ -77,7 +77,7 @@ export default function Quote() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <p className="text-gray-500 mb-4">Tu carrito está vacío.</p>
-          <button onClick={() => navigate('/')} className="text-blue-600 underline">Volver al catálogo</button>
+          <button onClick={() => navigate('/')} className="text-primary underline">Volver al catálogo</button>
         </div>
       </div>
     );
@@ -125,7 +125,7 @@ export default function Quote() {
               value={clientName}
               onChange={e => setClientName(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[48px]"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-h-[48px]"
               placeholder="Tu nombre completo"
             />
           </div>
@@ -137,7 +137,7 @@ export default function Quote() {
               value={clientPhone}
               onChange={e => setClientPhone(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[48px]"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-h-[48px]"
               placeholder="999888777"
             />
           </div>
@@ -148,7 +148,7 @@ export default function Quote() {
               type="email"
               value={clientEmail}
               onChange={e => setClientEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[48px]"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-h-[48px]"
               placeholder="tucorreo@ejemplo.com"
             />
           </div>
@@ -158,7 +158,7 @@ export default function Quote() {
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px]"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-h-[80px]"
               placeholder="Algún detalle extra para tu pedido..."
             />
           </div>
@@ -170,7 +170,7 @@ export default function Quote() {
           <button
             type="submit"
             disabled={sending}
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="w-full bg-primary text-white py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
           >
             {sending ? 'Enviando...' : 'Enviar cotización por WhatsApp'}
           </button>

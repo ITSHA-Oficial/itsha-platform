@@ -20,7 +20,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -39,7 +39,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <p className="text-gray-500 text-lg mb-4">Producto no encontrado</p>
-        <button onClick={() => navigate('/')} className="text-blue-600 underline">
+        <button onClick={() => navigate('/')} className="text-primary underline">
           Volver al inicio
         </button>
       </div>
@@ -132,7 +132,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
 
               <button
                 onClick={handleAddToCart}
-                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                className="flex-1 bg-primary text-white py-3 px-6 rounded-xl font-semibold transition-colors"
               >
                 Agregar al carrito
               </button>

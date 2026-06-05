@@ -84,12 +84,12 @@ export default function CategoryMenu({ categories, selected, onSelect, isOpen, o
             onClick={() => handleSelect(null)}
             className={`w-full text-left px-6 py-4 transition-colors flex items-center gap-3 ${
               selected === null
-                ? 'bg-blue-50 text-blue-700 font-medium'
+                ? 'bg-gray-100 text-primary font-medium'
                 : 'text-gray-700 hover:bg-gray-50'
             }`}
           >
             {selected === null && (
-              <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+              <div className="w-2 h-2 rounded-full bg-primary"></div>
             )}
             <span>Todas las categorías</span>
           </button>
@@ -100,12 +100,12 @@ export default function CategoryMenu({ categories, selected, onSelect, isOpen, o
               onClick={() => handleSelect(cat.slug)}
               className={`w-full text-left px-6 py-4 transition-colors flex items-center gap-3 ${
                 selected === cat.slug
-                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  ? 'bg-gray-100 text-primary font-medium'
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
               {selected === cat.slug && (
-                <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
               )}
               <span>{cat.name}</span>
             </button>

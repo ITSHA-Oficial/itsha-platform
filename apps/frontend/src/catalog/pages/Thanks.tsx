@@ -62,7 +62,7 @@ export default function Thanks() {
           </a>
           <button
             onClick={() => navigate('/')}
-            className="block w-full text-gray-500 py-3 font-medium hover:text-gray-700 transition-colors"
+            className="block w-full py-3 font-medium text-primary hover:text-primary transition-colors"
           >
             Volver al inicio
           </button>
