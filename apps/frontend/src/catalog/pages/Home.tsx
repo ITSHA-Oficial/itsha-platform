@@ -11,6 +11,7 @@ export default function Home() {
   const { products, categories, tenant, loading, error } = useCatalog();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [lastQuery, setLastQuery] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [isFiltering, setIsFiltering] = useState(false);
 
@@ -74,10 +75,27 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Abrir menú de categorías"
+          >
+            <span className="block h-0.5 w-6 rounded-full bg-gray-900"></span>
+            <span className="block h-0.5 w-6 rounded-full bg-gray-900"></span>
+            <span className="block h-0.5 w-6 rounded-full bg-gray-900"></span>
+          </button>
           <h1 className="text-xl font-bold text-gray-900">{tenant?.name || 'Catálogo'}</h1>
         </div>
       </header>
+
+      <CategoryMenu
+        categories={categories}
+        selected={selectedCategory}
+        onSelect={handleCategorySelect}
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+      />
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         <SearchBar
@@ -87,11 +105,6 @@ export default function Home() {
             applyFilters(selectedCategory, query);
           }}
           onSelectProduct={(sku) => navigate(`/producto/${sku}`)}
-        />
-        <CategoryMenu
-          categories={categories}
-          selected={selectedCategory}
-          onSelect={handleCategorySelect}
         />
 
         {filteredProducts.length === 0 ? (
