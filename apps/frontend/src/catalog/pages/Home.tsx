@@ -74,18 +74,26 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Abrir menú de categorías"
-          >
-            <span className="block h-0.5 w-6 rounded-full bg-gray-900"></span>
-            <span className="block h-0.5 w-6 rounded-full bg-gray-900"></span>
-            <span className="block h-0.5 w-6 rounded-full bg-gray-900"></span>
-          </button>
-          <h1 className="text-xl font-bold text-gray-900">{tenant?.name || 'Catálogo'}</h1>
+      <header className="bg-white shadow-sm sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3 flex items-center justify-between gap-2">
+          {/* Grupo izquierdo: hamburguesa + nombre */}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="w-10 h-10 flex-shrink-0 flex flex-col items-center justify-center gap-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Abrir menú de categorías"
+            >
+              <span className="block w-5 h-0.5 bg-gray-600 rounded-full"></span>
+              <span className="block w-5 h-0.5 bg-gray-600 rounded-full"></span>
+              <span className="block w-5 h-0.5 bg-gray-600 rounded-full"></span>
+            </button>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+              {tenant?.name || 'Catálogo'}
+            </h1>
+          </div>
+
+          {/* Espacio reservado para el ícono del carrito */}
+          <div className="w-11 h-11 flex-shrink-0"></div>
         </div>
       </header>
 
