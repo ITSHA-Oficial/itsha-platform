@@ -46,13 +46,26 @@ router.post('/:importId', async (req: Request, res: Response) => {
     for (const product of (diff.products || [])) {
       const { data: existingProduct } = await supabase
         .from('products')
-        .select('id')
+        .select('id, category_id')
         .eq('sku', product.sku)
         .eq('tenant_id', tenantId)
         .is('deleted_at', null)
         .maybeSingle();
 
       let productId: string;
+
+      // Resolver category_id desde category_slug
+      let categoryId: string | null = null;
+      if (product.category_slug) {
+        const { data: catData } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .eq('slug', product.category_slug)
+          .is('deleted_at', null)
+          .maybeSingle();
+        categoryId = catData?.id || null;
+      }
 
       if (existingProduct) {
         productId = existingProduct.id;
@@ -63,7 +76,8 @@ router.post('/:importId', async (req: Request, res: Response) => {
             description: product.description,
             pricing_mode: product.pricing_mode,
             display_price_mode: product.display_price_mode,
-            is_active: product.is_active
+            is_active: product.is_active,
+            category_id: categoryId || existingProduct.category_id
           })
           .eq('id', existingProduct.id);
         productsUpdated++;
@@ -77,7 +91,8 @@ router.post('/:importId', async (req: Request, res: Response) => {
             description: product.description,
             pricing_mode: product.pricing_mode,
             display_price_mode: product.display_price_mode,
-            is_active: product.is_active
+            is_active: product.is_active,
+            category_id: categoryId
           })
           .select('id')
           .single();
