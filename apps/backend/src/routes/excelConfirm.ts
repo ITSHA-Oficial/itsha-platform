@@ -64,7 +64,23 @@ router.post('/:importId', async (req: Request, res: Response) => {
           .eq('slug', product.category_slug)
           .is('deleted_at', null)
           .maybeSingle();
-        categoryId = catData?.id || null;
+
+        if (catData) {
+          categoryId = catData.id;
+        } else {
+          // Crear la categoría si no existe
+          const { data: newCat } = await supabase
+            .from('categories')
+            .insert({
+              tenant_id: tenantId,
+              name: product.category_slug.charAt(0).toUpperCase() + product.category_slug.slice(1).replace(/-/g, ' '),
+              slug: product.category_slug,
+              sort_order: 99
+            })
+            .select('id')
+            .single();
+          categoryId = newCat?.id || null;
+        }
       }
 
       if (existingProduct) {
