@@ -116,11 +116,8 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <SearchBar
           products={products}
-          onSearch={(query) => {
-            setLastQuery(query);
-            applyFilters(selectedCategory, query);
-          }}
-          onSelectProduct={(sku) => navigate(`/producto/${sku}`)}
+          onSearch={(query) => applyFilters(selectedCategory, query)}
+          getProductUrl={(product) => `/producto/${product.sku}`}
         />
 
         {filteredProducts.length === 0 ? (

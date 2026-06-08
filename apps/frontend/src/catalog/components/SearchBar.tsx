@@ -4,45 +4,49 @@ interface Product {
   id: string;
   sku: string;
   name: string;
-  // otros campos...
 }
 
 interface SearchBarProps {
-  products: Product[];
-  onSearch: (query: string) => void;        // Para filtrar el grid en tiempo real
-  onSelectProduct: (sku: string) => void;  // Para navegar al hacer clic en sugerencia
+  products?: Product[];                    // Para búsqueda local
+  getProductUrl?: (product: Product) => string; // Para navegar al hacer clic
+  onSearch?: (query: string) => void;      // Para filtrar en tiempo real
+  fetchSuggestions?: (query: string) => Promise<Product[]>; // Para búsqueda remota
 }
 
-export default function SearchBar({ products, onSearch, onSelectProduct }: SearchBarProps) {
+export default function SearchBar({ products = [], getProductUrl, onSearch, fetchSuggestions }: SearchBarProps) {
   const [value, setValue] = useState('');
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Efecto para filtrar sugerencias (dropdown) y grid (onSearch) con debounce
+  // Efecto para obtener sugerencias (local o remoto)
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       const query = value.trim().toLowerCase();
-      // Llamamos a onSearch para el grid
-      onSearch(query);
+      if (onSearch) onSearch(query);
 
-      // Generamos sugerencias locales para el dropdown
       if (query.length === 0) {
         setSuggestions([]);
         setShowDropdown(false);
-      } else {
-        const filtered = products.filter(
-          (p) =>
-            p.name.toLowerCase().includes(query) ||
-            p.sku.toLowerCase().includes(query)
-        );
-        setSuggestions(filtered.slice(0, 8));
-        setShowDropdown(filtered.length > 0);
+        return;
       }
-    }, 300); // debounce de 300ms
+
+      let results: Product[] = [];
+      if (fetchSuggestions) {
+        // Búsqueda remota (para admin)
+        results = await fetchSuggestions(query);
+      } else {
+        // Búsqueda local (para catálogo)
+        results = products.filter(p =>
+          p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query)
+        );
+      }
+      setSuggestions(results.slice(0, 8));
+      setShowDropdown(results.length > 0);
+    }, 300);
 
     return () => clearTimeout(timer);
-  }, [value, products, onSearch]);
+  }, [value, products, fetchSuggestions, onSearch]);
 
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
@@ -55,16 +59,26 @@ export default function SearchBar({ products, onSearch, onSelectProduct }: Searc
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelectSuggestion = (sku: string) => {
-    setValue('');
-    setShowDropdown(false);
-    onSelectProduct(sku);
-  };
+  // Cerrar dropdown con Escape o scroll
+  useEffect(() => {
+    const handleScroll = () => setShowDropdown(false);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowDropdown(false);
+    };
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
-  const handleClear = () => {
+  const handleSelect = (product: Product) => {
     setValue('');
     setShowDropdown(false);
-    onSearch('');
+    if (getProductUrl) {
+      window.location.href = getProductUrl(product);
+    }
   };
 
   return (
@@ -74,12 +88,12 @@ export default function SearchBar({ products, onSearch, onSelectProduct }: Searc
           type="text"
           value={value}
           onChange={e => setValue(e.target.value)}
-          placeholder="Buscar productos por nombre o SKU..."
-          className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[48px]"
+          placeholder="Buscar productos..."
+          className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[48px]"
         />
         {value && (
           <button
-            onClick={handleClear}
+            onClick={() => { setValue(''); if (onSearch) onSearch(''); }}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
           >
             ✕
@@ -87,13 +101,12 @@ export default function SearchBar({ products, onSearch, onSelectProduct }: Searc
         )}
       </div>
 
-      {/* Dropdown de sugerencias */}
       {showDropdown && suggestions.length > 0 && (
         <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-64 overflow-y-auto">
           {suggestions.map((product) => (
             <button
               key={product.id}
-              onClick={() => handleSelectSuggestion(product.sku)}
+              onClick={() => handleSelect(product)}
               className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-b-0"
             >
               <span className="font-medium text-gray-900 block">{product.name}</span>

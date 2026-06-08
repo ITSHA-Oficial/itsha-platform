@@ -93,8 +93,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
           {/* Barra de búsqueda reutilizada */}
           <SearchBar
             products={products}
-            onSearch={() => {}} // No necesitamos filtrar nada en detalle
-            onSelectProduct={(sku) => navigate(`/producto/${sku}`)}
+            getProductUrl={(product) => `/producto/${product.sku}`}
           />
         </div>
       </header>

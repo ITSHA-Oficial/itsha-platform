@@ -1,16 +1,13 @@
 import { useState } from 'react';
-import { TENANT_SLUG } from '../../catalog/utils/api';
+import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 import useProducts from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
+import SearchBar from '../../catalog/components/SearchBar';
 
 export default function Products() {
   const { products, pagination, loading, fetchProducts } = useProducts(TENANT_SLUG);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-
-  const handleSearch = () => {
-    fetchProducts(1, search ? { q: search } : undefined);
-  };
 
   if (loading) {
     return (
@@ -19,6 +16,19 @@ export default function Products() {
       </div>
     );
   }
+
+  const fetchSuggestions = async (query: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/v1/products?q=${encodeURIComponent(query)}&limit=8`, {
+        headers: { 'X-Tenant-Slug': TENANT_SLUG }
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.products || [];
+    } catch {
+      return [];
+    }
+  };
 
   return (
     <div>
@@ -33,19 +43,11 @@ export default function Products() {
       </div>
 
       {/* Buscador */}
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar por nombre o SKU..."
-          className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onKeyDown={e => e.key === 'Enter' && handleSearch()}
-        />
-        <button onClick={handleSearch} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">
-          Buscar
-        </button>
-      </div>
+      <SearchBar
+        fetchSuggestions={fetchSuggestions}
+        getProductUrl={(product) => `/admin/products/${product.id}`}
+        onSearch={(query) => { setSearch(query); fetchProducts(1, query ? { q: query } : undefined); }}
+      />
 
       {/* Tabla */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
