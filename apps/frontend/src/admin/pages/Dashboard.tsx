@@ -1,40 +1,61 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 
+interface QuoteRequest {
+  id: string;
+  client_name: string;
+  client_phone: string;
+  status: string;
+  processing_status: string;
+  created_at: string;
+}
+
+interface CatalogVersion {
+  version: number;
+  products_count: number;
+  created_at: string;
+  trigger: string;
+}
+
 export default function Dashboard() {
   const { user, role } = useAuth();
-  const [kpis, setKpis] = useState({ products: 0, quotes: 0, version: 0, jobs: 0 });
+  const navigate = useNavigate();
+
+  const [pendingQuotes, setPendingQuotes] = useState<QuoteRequest[]>([]);
+  const [closedQuotes, setClosedQuotes] = useState<QuoteRequest[]>([]);
+  const [catalogInfo, setCatalogInfo] = useState<CatalogVersion | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadKPIs() {
+    async function loadDashboard() {
       try {
         const headers = { 'X-Tenant-Slug': TENANT_SLUG };
-        
-        const [prodRes, quoteRes, catRes] = await Promise.all([
-          fetch(`${API_URL}/api/v1/products?is_active=true`, { headers }),
-          fetch(`${API_URL}/api/v1/quote-requests?status=nuevo`, { headers }),
-          fetch(`${API_URL}/api/v1/catalog/versions?limit=1`, { headers }),
-        ]);
 
-        const products = await prodRes.json();
-        const quotes = await quoteRes.json();
-        const catalog = await catRes.json();
+        // 1. Cotizaciones pendientes (nuevo o contactado)
+        const pendingRes = await fetch(`${API_URL}/api/v1/quote-requests?status=nuevo&limit=5`, { headers });
+        const pendingData = await pendingRes.json();
+        setPendingQuotes(pendingData.quote_requests || []);
 
-        setKpis({
-          products: products?.pagination?.total || 0,
-          quotes: quotes?.pagination?.total || 0,
-          version: catalog?.versions?.[0]?.version || 0,
-          jobs: 0,
-        });
+        // 2. Cotizaciones cerradas recientemente
+        const closedRes = await fetch(`${API_URL}/api/v1/quote-requests?status=cerrado&limit=5`, { headers });
+        const closedData = await closedRes.json();
+        setClosedQuotes(closedData.quote_requests || []);
+
+        // 3. Versión activa del catálogo
+        const catalogRes = await fetch(`${API_URL}/api/v1/catalog/versions?limit=1`, { headers });
+        const catalogData = await catalogRes.json();
+        if (catalogData.versions && catalogData.versions.length > 0) {
+          setCatalogInfo(catalogData.versions[0]);
+        }
       } catch (err) {
-        console.error('Error al cargar KPIs:', err);
+        console.error('Error al cargar dashboard:', err);
       } finally {
         setLoading(false);
       }
     }
-    loadKPIs();
+    loadDashboard();
   }, []);
 
   if (loading) {
@@ -47,25 +68,74 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
-      <p className="text-gray-500 mb-8">Bienvenido, {user?.email}. Rol: {role}</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
+      <p className="text-gray-500 mb-6">Bienvenido, {user?.email}. Rol: {role}</p>
+
+      {/* Tarjetas de resumen rápido */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-1">Productos activos</p>
-          <p className="text-3xl font-bold text-gray-900">{kpis.products}</p>
+          <p className="text-sm text-gray-500 mb-1">Pendientes de contacto</p>
+          <p className="text-3xl font-bold text-yellow-600">{pendingQuotes.length}</p>
         </div>
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-1">Cotizaciones nuevas</p>
-          <p className="text-3xl font-bold text-blue-600">{kpis.quotes}</p>
+          <p className="text-sm text-gray-500 mb-1">Cotizaciones cerradas</p>
+          <p className="text-3xl font-bold text-green-600">{closedQuotes.length}</p>
         </div>
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-1">Versión del catálogo</p>
-          <p className="text-3xl font-bold text-gray-900">v{kpis.version}</p>
+          <p className="text-sm text-gray-500 mb-1">Catálogo activo</p>
+          {catalogInfo ? (
+            <div>
+              <p className="text-3xl font-bold text-blue-600">v{catalogInfo.version}</p>
+              <p className="text-xs text-gray-400">{catalogInfo.products_count} productos</p>
+              <p className="text-xs text-gray-400">Actualizado {new Date(catalogInfo.created_at).toLocaleDateString('es-PE')}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">No disponible</p>
+          )}
         </div>
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-1">Jobs fallidos</p>
-          <p className="text-3xl font-bold text-red-500">{kpis.jobs}</p>
+      </div>
+
+      {/* Cotizaciones pendientes */}
+      <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+        <h2 className="font-semibold text-gray-800 mb-4">Cotizaciones pendientes de contacto</h2>
+        {pendingQuotes.length === 0 ? (
+          <p className="text-sm text-gray-400">No hay cotizaciones pendientes.</p>
+        ) : (
+          <div className="space-y-3">
+            {pendingQuotes.map(q => (
+              <div key={q.id} className="flex justify-between items-center border-b pb-2 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{q.client_name}</p>
+                  <p className="text-xs text-gray-500">{q.client_phone} · {new Date(q.created_at).toLocaleDateString('es-PE')}</p>
+                </div>
+                <button
+                  onClick={() => navigate(`/admin/quote-requests/${q.id}`)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Ver detalle
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Acciones rápidas */}
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <h2 className="font-semibold text-gray-800 mb-4">Acciones rápidas</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button onClick={() => navigate('/admin/products')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">
+            Ver productos
+          </button>
+          <button onClick={() => navigate('/admin/products/new')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">
+            Nuevo producto
+          </button>
+          <button onClick={() => navigate('/admin/quote-requests')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">
+            Ver cotizaciones
+          </button>
+          <button onClick={() => navigate('/admin/categories')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">
+            Gestionar categorías
+          </button>
         </div>
       </div>
     </div>
