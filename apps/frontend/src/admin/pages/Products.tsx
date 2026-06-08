@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { TENANT_SLUG } from '../../catalog/utils/api';
 import useProducts from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
@@ -8,14 +8,17 @@ export default function Products() {
   const { products: allProducts, pagination, loading, fetchProducts } = useProducts(TENANT_SLUG);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const hasLoaded = useRef(false);
 
-  // Cargar productos al montar
+  // Cargar productos UNA SOLA VEZ al montar la página
   useEffect(() => {
-    fetchProducts(1, { limit: '100' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!hasLoaded.current) {
+      hasLoaded.current = true;
+      fetchProducts(1, { limit: '100' });
+    }
   }, []);
 
-  // Filtrar localmente
+  // Filtrar localmente según el texto del buscador
   const products = useMemo(() => {
     if (!search.trim()) return allProducts;
     const q = search.toLowerCase().trim();
@@ -46,29 +49,11 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Buscador predictivo (solo navega, no filtra la tabla) */}
+      {/* Única barra de búsqueda: predictiva + filtro en tiempo real */}
       <AdminSearchBar
         onSelectProduct={(product) => navigate(`/admin/products/${product.id}`)}
+        onSearch={(query) => setSearch(query)}
       />
-
-      {/* Buscador local para filtrar la tabla */}
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Filtrar tabla por nombre o SKU..."
-          className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {search && (
-          <button
-            onClick={() => setSearch('')}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200"
-          >
-            Limpiar
-          </button>
-        )}
-      </div>
 
       {/* Tabla de productos */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -118,7 +103,7 @@ export default function Products() {
           {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map(page => (
             <button
               key={page}
-              onClick={() => fetchProducts(page)}
+              onClick={() => fetchProducts(page, { limit: '100' })}
               className={`px-3 py-1 rounded-lg text-sm ${page === pagination.page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
             >
               {page}
