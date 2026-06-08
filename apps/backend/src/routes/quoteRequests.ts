@@ -182,4 +182,44 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// PUT /api/v1/quote-requests/:id/status
+router.put('/:id/status', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !['nuevo', 'contactado', 'cerrado', 'perdido'].includes(status)) {
+      return res.status(400).json({ error: { code: 'INVALID_STATUS', message: 'Estado no válido' } });
+    }
+
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({ error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere X-Tenant-Slug' } });
+    }
+
+    const { data: tenant } = await supabase.from('tenants').select('id').eq('slug', tenantSlug).eq('active', true).single();
+    if (!tenant) {
+      return res.status(404).json({ error: { code: 'TENANT_NOT_FOUND', message: 'Tenant no encontrado' } });
+    }
+
+    const { data: quoteRequest, error } = await supabase
+      .from('quote_requests')
+      .update({ status })
+      .eq('id', id)
+      .eq('tenant_id', tenant.id)
+      .select('id, status')
+      .single();
+
+    if (error || !quoteRequest) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Cotización no encontrada' } });
+    }
+
+    return res.json(quoteRequest);
+  } catch (err: any) {
+    console.error('Error en PUT /quote-requests/:id/status:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno' } });
+  }
+});
+
 export default router;

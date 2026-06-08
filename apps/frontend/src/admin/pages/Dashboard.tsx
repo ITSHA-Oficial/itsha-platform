@@ -27,36 +27,54 @@ export default function Dashboard() {
   const [closedQuotes, setClosedQuotes] = useState<QuoteRequest[]>([]);
   const [catalogInfo, setCatalogInfo] = useState<CatalogVersion | null>(null);
   const [loading, setLoading] = useState(true);
+  const [closingId, setClosingId] = useState<string | null>(null);
+
+  const loadDashboard = async () => {
+    try {
+      const headers = { 'X-Tenant-Slug': TENANT_SLUG };
+
+      const [pendingRes, closedRes, catalogRes] = await Promise.all([
+        fetch(`${API_URL}/api/v1/quote-requests?status=nuevo&limit=5`, { headers }),
+        fetch(`${API_URL}/api/v1/quote-requests?status=cerrado&limit=5`, { headers }),
+        fetch(`${API_URL}/api/v1/catalog/versions?limit=1`, { headers })
+      ]);
+
+      const pendingData = await pendingRes.json();
+      const closedData = await closedRes.json();
+      const catalogData = await catalogRes.json();
+
+      setPendingQuotes(pendingData.quote_requests || []);
+      setClosedQuotes(closedData.quote_requests || []);
+      if (catalogData.versions && catalogData.versions.length > 0) {
+        setCatalogInfo(catalogData.versions[0]);
+      }
+    } catch (err) {
+      console.error('Error al cargar dashboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadDashboard() {
-      try {
-        const headers = { 'X-Tenant-Slug': TENANT_SLUG };
-
-        // 1. Cotizaciones pendientes (nuevo o contactado)
-        const pendingRes = await fetch(`${API_URL}/api/v1/quote-requests?status=nuevo&limit=5`, { headers });
-        const pendingData = await pendingRes.json();
-        setPendingQuotes(pendingData.quote_requests || []);
-
-        // 2. Cotizaciones cerradas recientemente
-        const closedRes = await fetch(`${API_URL}/api/v1/quote-requests?status=cerrado&limit=5`, { headers });
-        const closedData = await closedRes.json();
-        setClosedQuotes(closedData.quote_requests || []);
-
-        // 3. Versión activa del catálogo
-        const catalogRes = await fetch(`${API_URL}/api/v1/catalog/versions?limit=1`, { headers });
-        const catalogData = await catalogRes.json();
-        if (catalogData.versions && catalogData.versions.length > 0) {
-          setCatalogInfo(catalogData.versions[0]);
-        }
-      } catch (err) {
-        console.error('Error al cargar dashboard:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadDashboard();
   }, []);
+
+  const handleCloseQuote = async (quoteId: string) => {
+    setClosingId(quoteId);
+    try {
+      await fetch(`${API_URL}/api/v1/quote-requests/${quoteId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Tenant-Slug': TENANT_SLUG },
+        body: JSON.stringify({ status: 'cerrado' })
+      });
+      // Recargar ambas listas
+      await loadDashboard();
+    } catch (err) {
+      console.error('Error al cerrar cotización:', err);
+    } finally {
+      setClosingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -109,10 +127,11 @@ export default function Dashboard() {
                   <p className="text-xs text-gray-500">{q.client_phone} · {new Date(q.created_at).toLocaleDateString('es-PE')}</p>
                 </div>
                 <button
-                  onClick={() => navigate(`/admin/quote-requests/${q.id}`)}
-                  className="text-sm text-primary hover:underline"
+                  onClick={() => handleCloseQuote(q.id)}
+                  disabled={closingId === q.id}
+                  className="text-sm bg-green-50 text-green-700 px-3 py-1 rounded-lg hover:bg-green-100 disabled:opacity-50"
                 >
-                  Ver detalle
+                  {closingId === q.id ? 'Cerrando...' : 'Cerrar cotización'}
                 </button>
               </div>
             ))}
