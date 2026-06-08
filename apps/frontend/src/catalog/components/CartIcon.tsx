@@ -7,7 +7,7 @@ export default function CartIcon({ totalItems, onClick }: CartIconProps) {
   return (
     <button
       onClick={onClick}
-      className="relative p-2 text-gray-700 hover:text-primary transition-colors"
+      className="relative p-2 text-gray-700 hover:text-primary transition-colors bg-white/90 backdrop-blur-sm rounded-full shadow-sm"
       aria-label="Abrir carrito"
     >
       <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
