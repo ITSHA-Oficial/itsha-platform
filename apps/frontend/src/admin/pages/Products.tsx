@@ -21,8 +21,9 @@ export default function Products() {
     const q = search.toLowerCase().trim();
     return allProducts.filter(
       (p: any) =>
-        p.name.toLowerCase().startsWith(q) ||
-        p.sku.toLowerCase().startsWith(q)
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q))
     );
   }, [allProducts, search]);
 

@@ -47,9 +47,14 @@ export default function AdminSearchBar({ onSelectProduct, onSearch }: AdminSearc
         });
         if (!res.ok) return;
         const data = await res.json();
-        const results = data.products || [];
-        setSuggestions(results);
-        setShowDropdown(results.length > 0);
+        const backendResults = data.products || [];
+        // Filtro adicional en el cliente para asegurar la relevancia
+        const lowerCaseQuery = query.toLowerCase();
+        const filteredResults = backendResults.filter((p: Product) =>
+          p.name.toLowerCase().includes(lowerCaseQuery) || p.sku.toLowerCase().includes(lowerCaseQuery)
+        );
+        setSuggestions(filteredResults);
+        setShowDropdown(filteredResults.length > 0);
       } catch (error) {
         console.error('Error en búsqueda predictiva:', error);
         setSuggestions([]);
