@@ -1,13 +1,16 @@
-import { useState } from 'react';
-import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
+import { useEffect } from 'react';
+import { TENANT_SLUG } from '../../catalog/utils/api';
 import useProducts from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
-import SearchBar from '../../catalog/components/SearchBar';
+import AdminSearchBar from '../components/AdminSearchBar';
 
 export default function Products() {
   const { products, pagination, loading, fetchProducts } = useProducts(TENANT_SLUG);
-  const [search, setSearch] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchProducts(1);
+  }, [fetchProducts]);
 
   if (loading) {
     return (
@@ -16,19 +19,6 @@ export default function Products() {
       </div>
     );
   }
-
-  const fetchSuggestions = async (query: string) => {
-    try {
-      const res = await fetch(`${API_URL}/api/v1/products?q=${encodeURIComponent(query)}&limit=8`, {
-        headers: { 'X-Tenant-Slug': TENANT_SLUG }
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return data.products || [];
-    } catch {
-      return [];
-    }
-  };
 
   return (
     <div>
@@ -42,14 +32,10 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Buscador */}
-      <SearchBar
-        fetchSuggestions={fetchSuggestions}
-        getProductUrl={(product) => `/admin/products/${product.id}`}
-        onSearch={(query) => { setSearch(query); fetchProducts(1, query ? { q: query } : undefined); }}
+      <AdminSearchBar
+        onSearch={(query) => fetchProducts(1, query ? { q: query } : undefined)}
       />
 
-      {/* Tabla */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
@@ -83,13 +69,12 @@ export default function Products() {
         </table>
       </div>
 
-      {/* Paginación */}
       {pagination.total_pages > 1 && (
         <div className="flex justify-center gap-2 mt-4">
           {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map(page => (
             <button
               key={page}
-              onClick={() => fetchProducts(page, search ? { q: search } : undefined)}
+              onClick={() => fetchProducts(page)}
               className={`px-3 py-1 rounded-lg text-sm ${page === pagination.page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
             >
               {page}
