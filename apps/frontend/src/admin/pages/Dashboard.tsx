@@ -34,8 +34,8 @@ export default function Dashboard() {
       const headers = { 'X-Tenant-Slug': TENANT_SLUG };
 
       const [pendingRes, closedRes, catalogRes] = await Promise.all([
-        fetch(`${API_URL}/api/v1/quote-requests?status=nuevo&limit=5`, { headers }),
-        fetch(`${API_URL}/api/v1/quote-requests?status=cerrado&limit=5`, { headers }),
+        fetch(`${API_URL}/api/v1/quote-requests?status=nuevo&limit=100`, { headers }),
+        fetch(`${API_URL}/api/v1/quote-requests?status=cerrado&limit=100`, { headers }),
         fetch(`${API_URL}/api/v1/catalog/versions?limit=1`, { headers })
       ]);
 
@@ -55,9 +55,7 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
+  useEffect(() => { loadDashboard(); }, []);
 
   const handleCloseQuote = async (quoteId: string) => {
     setClosingId(quoteId);
@@ -67,7 +65,6 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json', 'X-Tenant-Slug': TENANT_SLUG },
         body: JSON.stringify({ status: 'cerrado' })
       });
-      // Recargar ambas listas
       await loadDashboard();
     } catch (err) {
       console.error('Error al cerrar cotización:', err);
@@ -89,7 +86,6 @@ export default function Dashboard() {
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
       <p className="text-gray-500 mb-6">Bienvenido, {user?.email}. Rol: {role}</p>
 
-      {/* Tarjetas de resumen rápido */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <p className="text-sm text-gray-500 mb-1">Pendientes de contacto</p>
@@ -113,13 +109,15 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Cotizaciones pendientes */}
+      {/* Pendientes con scroll */}
       <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-        <h2 className="font-semibold text-gray-800 mb-4">Cotizaciones pendientes de contacto</h2>
+        <h2 className="font-semibold text-gray-800 mb-4">
+          Cotizaciones pendientes de contacto ({pendingQuotes.length})
+        </h2>
         {pendingQuotes.length === 0 ? (
           <p className="text-sm text-gray-400">No hay cotizaciones pendientes.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="max-h-96 overflow-y-auto pr-2 space-y-3">
             {pendingQuotes.map(q => (
               <div key={q.id} className="flex justify-between items-center border-b pb-2 last:border-0">
                 <div>
@@ -139,22 +137,35 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Acciones rápidas */}
+      {/* Cerradas con scroll */}
+      <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+        <h2 className="font-semibold text-gray-800 mb-4">
+          Últimas cotizaciones cerradas ({closedQuotes.length})
+        </h2>
+        {closedQuotes.length === 0 ? (
+          <p className="text-sm text-gray-400">No hay cotizaciones cerradas.</p>
+        ) : (
+          <div className="max-h-96 overflow-y-auto pr-2 space-y-3">
+            {closedQuotes.map(q => (
+              <div key={q.id} className="flex justify-between items-center border-b pb-2 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{q.client_name}</p>
+                  <p className="text-xs text-gray-500">{q.client_phone} · {new Date(q.created_at).toLocaleDateString('es-PE')}</p>
+                </div>
+                <span className="text-sm text-green-600 font-medium">Cerrado</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="bg-white rounded-2xl shadow-sm p-6">
         <h2 className="font-semibold text-gray-800 mb-4">Acciones rápidas</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button onClick={() => navigate('/admin/products')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">
-            Ver productos
-          </button>
-          <button onClick={() => navigate('/admin/products/new')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">
-            Nuevo producto
-          </button>
-          <button onClick={() => navigate('/admin/quote-requests')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">
-            Ver cotizaciones
-          </button>
-          <button onClick={() => navigate('/admin/categories')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">
-            Gestionar categorías
-          </button>
+          <button onClick={() => navigate('/admin/products')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">Ver productos</button>
+          <button onClick={() => navigate('/admin/products/new')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">Nuevo producto</button>
+          <button onClick={() => navigate('/admin/quote-requests')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">Ver cotizaciones</button>
+          <button onClick={() => navigate('/admin/categories')} className="p-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">Gestionar categorías</button>
         </div>
       </div>
     </div>
