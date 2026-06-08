@@ -142,4 +142,44 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/v1/quote-requests
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({ error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere X-Tenant-Slug' } });
+    }
+    const { data: tenant } = await supabase.from('tenants').select('id').eq('slug', tenantSlug).eq('active', true).single();
+    if (!tenant) {
+      return res.status(404).json({ error: { code: 'TENANT_NOT_FOUND', message: 'Tenant no encontrado' } });
+    }
+
+    const { status, processing_status, date_from, date_to, q, page, limit } = req.query;
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = Math.min(parseInt(limit as string) || 20, 100);
+    const offset = (pageNum - 1) * limitNum;
+
+    let query = supabase.from('quote_requests').select('*', { count: 'exact' }).eq('tenant_id', tenant.id).order('created_at', { ascending: false });
+
+    if (status) query = query.eq('status', status);
+    if (processing_status) query = query.eq('processing_status', processing_status);
+    if (date_from) query = query.gte('created_at', date_from);
+    if (date_to) query = query.lte('created_at', date_to);
+    if (q) query = query.or(`client_name.ilike.%${q}%,client_phone.ilike.%${q}%`);
+
+    const { data: quoteRequests, error, count } = await query.range(offset, offset + limitNum - 1);
+
+    if (error) throw error;
+
+    return res.json({
+      quote_requests: quoteRequests || [],
+      pagination: { page: pageNum, limit: limitNum, total: count || 0, total_pages: Math.ceil((count || 0) / limitNum) }
+    });
+  } catch (err: any) {
+    console.error('Error en GET /quote-requests:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno' } });
+  }
+});
+
 export default router;

@@ -63,6 +63,9 @@ app.use('/api/v1/catalog', catalogRoutes);
 import catalogDataRoutes from './routes/catalogData';
 app.use('/api/v1/catalog/data', catalogDataRoutes);
 
+import catalogVersionsRoutes from './routes/catalogVersions';
+app.use('/api/v1/catalog/versions', catalogVersionsRoutes);
+
 import quoteRequestRoutes from './routes/quoteRequests';
 app.use('/api/v1/quote-requests', quoteRequestRoutes);
 
