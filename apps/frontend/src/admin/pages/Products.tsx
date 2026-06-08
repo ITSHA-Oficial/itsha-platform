@@ -1,16 +1,11 @@
-import { useState } from 'react';
 import { TENANT_SLUG } from '../../catalog/utils/api';
 import useProducts from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
+import AdminSearchBar from '../components/AdminSearchBar';
 
 export default function Products() {
   const { products, pagination, loading, fetchProducts } = useProducts(TENANT_SLUG);
-  const [search, setSearch] = useState('');
   const navigate = useNavigate();
-
-  const handleSearch = () => {
-    fetchProducts(1, search ? { q: search } : undefined);
-  };
 
   if (loading) {
     return (
@@ -32,20 +27,9 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Buscador simple que no rompe la página */}
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar por nombre o SKU..."
-          className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onKeyDown={e => e.key === 'Enter' && handleSearch()}
-        />
-        <button onClick={handleSearch} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">
-          Buscar
-        </button>
-      </div>
+      <AdminSearchBar
+        onSelectProduct={(product) => navigate(`/admin/products/${product.id}`)}
+      />
 
       {/* Tabla de productos */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -95,7 +79,7 @@ export default function Products() {
           {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map(page => (
             <button
               key={page}
-              onClick={() => fetchProducts(page, search ? { q: search } : undefined)}
+              onClick={() => fetchProducts(page)}
               className={`px-3 py-1 rounded-lg text-sm ${page === pagination.page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
             >
               {page}
