@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { TENANT_SLUG } from '../../catalog/utils/api';
 import useProducts from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
@@ -8,14 +8,11 @@ export default function Products() {
   const { products: allProducts, pagination, loading, fetchProducts } = useProducts(TENANT_SLUG);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const hasLoaded = useRef(false);
 
   // Cargar productos UNA SOLA VEZ al montar la página
   useEffect(() => {
-    if (!hasLoaded.current) {
-      hasLoaded.current = true;
-      fetchProducts(1, { limit: '100' });
-    }
+    fetchProducts(1, { limit: '100' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filtrar localmente según el texto del buscador
