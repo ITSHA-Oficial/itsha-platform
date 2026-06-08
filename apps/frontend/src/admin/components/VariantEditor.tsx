@@ -36,24 +36,30 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
   const [price, setPrice] = useState('');
   const [minQty, setMinQty] = useState('1');
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  const fetchData = async () => {
+  const triggerRefetch = () => setRefetchTrigger(c => c + 1);
+
+  useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/v1/products/${productId}`, {
-        headers: { 'X-Tenant-Slug': TENANT_SLUG }
+    fetch(`${API_URL}/api/v1/products/${productId}`, { headers: { 'X-Tenant-Slug': TENANT_SLUG } })
+      .then(res => res.json())
+      .then(data => {
+        if (!cancelled) {
+          setFeatures(data.features || []);
+          setVariants(data.variants || []);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          console.error(err);
+          setLoading(false);
+        }
       });
-      const data = await res.json();
-      setFeatures(data.features || []);
-      setVariants(data.variants || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchData(); }, [productId]);
+    return () => { cancelled = true; };
+  }, [productId, refetchTrigger]);
 
   const handleCreateVariant = async () => {
     const attrIds = Object.values(selectedAttrs).filter(Boolean);
@@ -81,7 +87,7 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
         setSelectedAttrs({});
         setPrice('');
         setMinQty('1');
-        fetchData();
+        triggerRefetch();
       } else {
         const err = await res.json();
         alert(err?.error?.message || 'Error al crear la variante.');
@@ -98,7 +104,7 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
         method: 'DELETE',
         headers: { 'X-Tenant-Slug': TENANT_SLUG }
       });
-      fetchData();
+      triggerRefetch();
     } catch (err) {
       console.error(err);
     }

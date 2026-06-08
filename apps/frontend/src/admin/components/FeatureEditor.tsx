@@ -23,23 +23,29 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
   const [loading, setLoading] = useState(true);
   const [newFeatureName, setNewFeatureName] = useState('');
   const [newAttrValue, setNewAttrValue] = useState<Record<string, string>>({});
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  const fetchFeatures = async () => {
+  const triggerRefetch = () => setRefetchTrigger(c => c + 1);
+
+  useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/v1/products/${productId}`, {
-        headers: { 'X-Tenant-Slug': TENANT_SLUG }
+    fetch(`${API_URL}/api/v1/products/${productId}`, { headers: { 'X-Tenant-Slug': TENANT_SLUG } })
+      .then(res => res.json())
+      .then(data => {
+        if (!cancelled) {
+          setFeatures(data.features || []);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          console.error(err);
+          setLoading(false);
+        }
       });
-      const data = await res.json();
-      setFeatures(data.features || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchFeatures(); }, [productId]);
+    return () => { cancelled = true; };
+  }, [productId, refetchTrigger]);
 
   const addFeature = async () => {
     if (!newFeatureName.trim()) return;
@@ -50,7 +56,7 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         body: JSON.stringify({ name: newFeatureName.trim(), sort_order: features.length + 1 })
       });
       setNewFeatureName('');
-      fetchFeatures();
+      triggerRefetch();
     } catch (err) {
       console.error(err);
     }
@@ -66,7 +72,7 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         body: JSON.stringify({ value, sort_order: 1 })
       });
       setNewAttrValue(prev => ({ ...prev, [featureId]: '' }));
-      fetchFeatures();
+      triggerRefetch();
     } catch (err) {
       console.error(err);
     }
@@ -79,7 +85,7 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         method: 'DELETE',
         headers: { 'X-Tenant-Slug': TENANT_SLUG }
       });
-      fetchFeatures();
+      triggerRefetch();
     } catch (err) {
       console.error(err);
     }

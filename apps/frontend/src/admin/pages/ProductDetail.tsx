@@ -24,20 +24,30 @@ export default function ProductDetail() {
   const [categoryId, setCategoryId] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
     fetch(`${API_URL}/api/v1/products/${id}`, { headers: { 'X-Tenant-Slug': TENANT_SLUG } })
       .then(res => res.json())
       .then(data => {
-        setProduct(data);
-        setName(data.name || '');
-        setDescription(data.description || '');
-        setSku(data.sku || '');
-        setPricingMode(data.pricing_mode || 'explicit_variant');
-        setDisplayPriceMode(data.display_price_mode || 'hidden');
-        setIsActive(data.is_active);
-        setCategoryId(data.category_id || '');
+        if (!cancelled) {
+          setProduct(data);
+          setName(data.name || '');
+          setDescription(data.description || '');
+          setSku(data.sku || '');
+          setPricingMode(data.pricing_mode || 'explicit_variant');
+          setDisplayPriceMode(data.display_price_mode || 'hidden');
+          setIsActive(data.is_active);
+          setCategoryId(data.category_id || '');
+          setLoading(false);
+        }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch(err => {
+        if (!cancelled) {
+          console.error(err);
+          setLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
   }, [id]);
 
   useEffect(() => {
