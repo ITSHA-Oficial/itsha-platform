@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { TENANT_SLUG } from '../../catalog/utils/api';
 import useProducts from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
@@ -8,20 +8,25 @@ export default function Products() {
   const { products: allProducts, pagination, loading, fetchProducts } = useProducts(TENANT_SLUG);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const hasLoaded = useRef(false);
 
   // Cargar productos UNA SOLA VEZ al montar la página
   useEffect(() => {
-    fetchProducts(1, { limit: '100' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!hasLoaded.current) {
+      hasLoaded.current = true;
+      fetchProducts(1, { limit: '100' });
+    }
   }, []);
 
-  // Filtrar localmente según el texto del buscador
+  // Filtrar localmente (misma lógica que el Catálogo Web)
   const products = useMemo(() => {
     if (!search.trim()) return allProducts;
     const q = search.toLowerCase().trim();
     return allProducts.filter(
       (p: any) =>
-        p.name.toLowerCase().includes(q)
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q))
     );
   }, [allProducts, search]);
 
@@ -45,7 +50,7 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Única barra de búsqueda: predictiva + filtro en tiempo real */}
+      {/* Única barra de búsqueda: predictiva + filtro local en tiempo real */}
       <AdminSearchBar
         onSelectProduct={(product) => navigate(`/admin/products/${product.id}`)}
         onSearch={(query) => setSearch(query)}
