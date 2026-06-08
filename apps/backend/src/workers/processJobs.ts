@@ -143,6 +143,22 @@ export async function processNextJob(): Promise<boolean> {
           })
           .eq('id', quoteId);
 
+        // Enviar correo si el cliente proporcionó email
+        if (quote.client_email) {
+          try {
+            const emailService = await import('../services/email');
+            await emailService.sendQuoteEmail(
+              quote.client_email,
+              'Tu cotización está lista',
+              pdfBuffer,
+              quote.client_name
+            );
+            console.log(`[Worker] Correo enviado a ${quote.client_email}`);
+          } catch (emailErr: any) {
+            console.error('[Worker] Error al enviar correo:', emailErr.message);
+          }
+        }
+
         console.log(`[Worker] PDF generado para quote ${quoteId}. WhatsApp: ${whatsappUrl}`);
         break;
       }
