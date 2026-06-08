@@ -1,8 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import useCatalog from '../hooks/useCatalog';
 import SpecConfigurator from '../components/SpecConfigurator';
+import SearchBar from '../components/SearchBar';
 import FormulaInputs from '../components/FormulaInputs';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ProductDetailProps {
   onAddToCart: (item: any) => void;
@@ -16,6 +17,13 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [formulaInputs, setFormulaInputs] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(1);
+
+  // Reset state when SKU changes
+  useEffect(() => {
+    setSelectedOptions({});
+    setFormulaInputs({});
+    setQuantity(1);
+  }, [sku]);
 
   if (loading) {
     return (
@@ -75,11 +83,19 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700">
-            ← Volver
-          </button>
-          <h1 className="text-lg font-bold text-gray-900 truncate">{product.name}</h1>
+        <div className="max-w-4xl mx-auto px-4 py-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700 shrink-0">
+              ← Volver
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 truncate">{product.name}</h1>
+          </div>
+          {/* Barra de búsqueda reutilizada */}
+          <SearchBar
+            products={products}
+            onSearch={() => {}} // No necesitamos filtrar nada en detalle
+            onSelectProduct={(sku) => navigate(`/producto/${sku}`)}
+          />
         </div>
       </header>
 
