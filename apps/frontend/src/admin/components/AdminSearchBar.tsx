@@ -8,12 +8,13 @@ interface Product {
 
 interface AdminSearchBarProps {
   onSelectProduct: (product: Product) => void;
+  onSearch?: (query: string) => void;  // NUEVA PROP para filtrar la tabla
 }
 
 const API_URL = import.meta.env.VITE_API_URL;
 const TENANT_SLUG = import.meta.env.VITE_TENANT_SLUG;
 
-export default function AdminSearchBar({ onSelectProduct }: AdminSearchBarProps) {
+export default function AdminSearchBar({ onSelectProduct, onSearch }: AdminSearchBarProps) {
   const [value, setValue] = useState('');
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -26,6 +27,12 @@ export default function AdminSearchBar({ onSelectProduct }: AdminSearchBarProps)
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const query = value.trim();
+    
+    // Notificar al padre para filtrar la tabla (incluso si está vacío)
+    if (onSearch) {
+      onSearch(query);
+    }
+
     if (query.length < 1) {
       setSuggestions([]);
       setShowDropdown(false);
@@ -55,7 +62,7 @@ export default function AdminSearchBar({ onSelectProduct }: AdminSearchBarProps)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [value]);
+  }, [value, onSearch]);
 
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
