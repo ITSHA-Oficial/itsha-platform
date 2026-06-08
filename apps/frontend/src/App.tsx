@@ -43,75 +43,75 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Rutas del Catálogo Web (públicas) */}
-        <Route path="/" element={
-          <div className="relative min-h-screen">
-            {ReactDOM.createPortal(
-              <div className="fixed top-4 right-4 z-50">
-                <CartIcon totalItems={totalItems} onClick={() => setCartOpen(true)} />
-              </div>,
-              document.body
-            )}
-            {cartOpen && (
-              <CartPanel
-                items={items}
-                onRemove={removeItem}
-                onUpdateQuantity={updateQuantity}
-                onClose={() => setCartOpen(false)}
-                showTotal={showCartTotal}
-              />
-            )}
-            <Home />
-          </div>
-        } />
-        <Route path="/producto/:sku" element={<CatalogProductDetail onAddToCart={addItem} />} />
-        <Route path="/cotizar" element={<Quote />} />
-        <Route path="/gracias" element={<Thanks />} />
+      <div className="relative min-h-screen">
+        {/* Carrito siempre visible (portal) */}
+        {ReactDOM.createPortal(
+          <div className="fixed top-4 right-4 z-50">
+            <CartIcon totalItems={totalItems} onClick={() => setCartOpen(true)} />
+          </div>,
+          document.body
+        )}
+        {cartOpen && (
+          <CartPanel
+            items={items}
+            onRemove={removeItem}
+            onUpdateQuantity={updateQuantity}
+            onClose={() => setCartOpen(false)}
+            showTotal={showCartTotal}
+          />
+        )}
 
-        {/* Rutas del Product Manager (protegidas) */}
-        <Route path="/admin/login" element={<Login />} />
-        <Route path="/admin/dashboard" element={
-          <ProtectedRoute requiredRole="admin">
-            <Layout><Dashboard /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/products" element={
-          <ProtectedRoute requiredRole="admin">
-            <Layout><Products /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/products/new" element={
-          <ProtectedRoute requiredRole="admin">
-            <Layout><ProductNew /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/products/:id" element={
-          <ProtectedRoute requiredRole="admin">
-            <Layout><ProductDetail /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/excel/import" element={
-          <ProtectedRoute requiredRole="admin">
-            <Layout><ExcelImport /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/categories" element={
-          <ProtectedRoute requiredRole="admin">
-            <Layout><Categories /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/quote-requests" element={
-          <ProtectedRoute requiredRole="admin">
-            <Layout><QuoteRequests /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/settings" element={
-          <ProtectedRoute requiredRole="admin">
-            <Layout><Settings /></Layout>
-          </ProtectedRoute>
-        } />
-      </Routes>
+        <Routes>
+          {/* Rutas del Catálogo Web (públicas) */}
+          <Route path="/" element={<Home />} />
+          <Route path="/producto/:sku" element={<CatalogProductDetail onAddToCart={addItem} />} />
+          <Route path="/cotizar" element={<Quote />} />
+          <Route path="/gracias" element={<Thanks />} />
+
+          {/* Rutas del Product Manager (protegidas) */}
+          <Route path="/admin/login" element={<Login />} />
+          <Route path="/admin/dashboard" element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout><Dashboard /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/products" element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout><Products /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/products/new" element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout><ProductNew /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/products/:id" element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout><ProductDetail /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/excel/import" element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout><ExcelImport /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/categories" element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout><Categories /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/quote-requests" element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout><QuoteRequests /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/settings" element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout><Settings /></Layout>
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </div>
     </BrowserRouter>
   )
 }
