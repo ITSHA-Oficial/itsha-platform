@@ -11,8 +11,9 @@ export default function Products() {
 
   // Cargar productos al montar
   useEffect(() => {
-    fetchProducts(1, { limit: '100' }); // Cargar hasta 100 para filtrar localmente
-  }, [fetchProducts]);
+    fetchProducts(1, { limit: '100' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Filtrar localmente
   const products = useMemo(() => {
