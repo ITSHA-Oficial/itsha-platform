@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 
 interface Attribute {
@@ -36,42 +36,34 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
   const [price, setPrice] = useState('');
   const [minQty, setMinQty] = useState('1');
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const processingRef = useRef(false);
 
-  const triggerRefetch = () => setRefetchTrigger(c => c + 1);
-
-  useEffect(() => {
-    let cancelled = false;
+  const fetchData = async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
     setLoading(true);
-    fetch(`${API_URL}/api/v1/products/${productId}`, { headers: { 'X-Tenant-Slug': TENANT_SLUG } })
-      .then(res => res.json())
-      .then(data => {
-        if (!cancelled) {
-          setFeatures(data.features || []);
-          setVariants(data.variants || []);
-          setLoading(false);
-        }
-      })
-      .catch(err => {
-        if (!cancelled) {
-          console.error(err);
-          setLoading(false);
-        }
+    try {
+      const res = await fetch(`${API_URL}/api/v1/products/${productId}`, {
+        headers: { 'X-Tenant-Slug': TENANT_SLUG }
       });
-    return () => { cancelled = true; };
-  }, [productId, refetchTrigger]);
+      const data = await res.json();
+      setFeatures(data.features || []);
+      setVariants(data.variants || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      processingRef.current = false;
+    }
+  };
+
+  useEffect(() => { fetchData(); }, [productId]);
 
   const handleCreateVariant = async () => {
     const attrIds = Object.values(selectedAttrs).filter(Boolean);
-    if (attrIds.length !== features.length) {
-      alert('Selecciona un atributo para cada característica.');
-      return;
-    }
-    if (!price || parseFloat(price) <= 0) {
-      alert('Ingresa un precio válido.');
-      return;
-    }
-
+    if (attrIds.length !== features.length || processingRef.current) return;
+    if (!price || parseFloat(price) <= 0) return alert('Ingresa un precio válido.');
+    processingRef.current = true;
     try {
       const res = await fetch(`${API_URL}/api/v1/products/${productId}/variants`, {
         method: 'POST',
@@ -87,26 +79,31 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
         setSelectedAttrs({});
         setPrice('');
         setMinQty('1');
-        triggerRefetch();
+        await fetchData();
       } else {
         const err = await res.json();
         alert(err?.error?.message || 'Error al crear la variante.');
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      processingRef.current = false;
     }
   };
 
   const handleDeleteVariant = async (variantId: string) => {
-    if (!confirm('¿Eliminar esta variante?')) return;
+    if (!confirm('¿Eliminar esta variante?') || processingRef.current) return;
+    processingRef.current = true;
     try {
       await fetch(`${API_URL}/api/v1/variants/${variantId}`, {
         method: 'DELETE',
         headers: { 'X-Tenant-Slug': TENANT_SLUG }
       });
-      triggerRefetch();
+      await fetchData();
     } catch (err) {
       console.error(err);
+    } finally {
+      processingRef.current = false;
     }
   };
 
@@ -120,7 +117,6 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
 
   return (
     <div className="space-y-6">
-      {/* Variantes existentes */}
       {variants.length > 0 && (
         <div className="space-y-2">
           <h4 className="font-semibold text-gray-800">Variantes activas</h4>
@@ -144,18 +140,13 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
         </div>
       )}
 
-      {/* Crear nueva variante */}
       {!creating ? (
-        <button
-          onClick={() => setCreating(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-        >
+        <button onClick={() => setCreating(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
           Crear variante
         </button>
       ) : (
         <div className="bg-gray-50 rounded-xl p-4 space-y-4">
           <h4 className="font-semibold text-gray-800">Nueva variante</h4>
-
           {features.map(feature => (
             <div key={feature.id}>
               <label className="block text-sm font-medium text-gray-700 mb-1">{feature.name}</label>
@@ -171,18 +162,16 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
               </select>
             </div>
           ))}
-
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Precio (S/)</label>
-              <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="150.00" />
+              <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Cant. mínima</label>
-              <input type="number" value={minQty} onChange={e => setMinQty(e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="50" />
+              <input type="number" value={minQty} onChange={e => setMinQty(e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
-
           <div className="flex gap-2">
             <button onClick={handleCreateVariant} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
               Guardar variante

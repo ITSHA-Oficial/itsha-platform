@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 import FeatureEditor from '../components/FeatureEditor';
@@ -13,6 +13,7 @@ export default function ProductDetail() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'features' | 'variants' | 'images'>('info');
+  const loadingRef = useRef(false);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -20,12 +21,14 @@ export default function ProductDetail() {
   const [pricingMode, setPricingMode] = useState('explicit_variant');
   const [displayPriceMode, setDisplayPriceMode] = useState('hidden');
   const [isActive, setIsActive] = useState(true);
+  const [categoryId, setCategoryId] = useState<string>('');
   const [categories, setCategories] = useState<any[]>([]);
-  const [categoryId, setCategoryId] = useState<string | null>(null);
 
+  // Cargar producto
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    loadingRef.current = true;
     fetch(`${API_URL}/api/v1/products/${id}`, { headers: { 'X-Tenant-Slug': TENANT_SLUG } })
       .then(res => res.json())
       .then(data => {
@@ -39,17 +42,20 @@ export default function ProductDetail() {
           setIsActive(data.is_active);
           setCategoryId(data.category_id || '');
           setLoading(false);
+          loadingRef.current = false;
         }
       })
       .catch(err => {
         if (!cancelled) {
           console.error(err);
           setLoading(false);
+          loadingRef.current = false;
         }
       });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; loadingRef.current = false; };
   }, [id]);
 
+  // Cargar categorías
   useEffect(() => {
     fetch(`${API_URL}/api/v1/categories`, { headers: { 'X-Tenant-Slug': TENANT_SLUG } })
       .then(res => res.json())
@@ -57,15 +63,22 @@ export default function ProductDetail() {
       .catch(console.error);
   }, []);
 
-  const handleSave = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSave = async () => {
+    if (loadingRef.current || saving) return;
     setSaving(true);
     setMessage(null);
     try {
       const res = await fetch(`${API_URL}/api/v1/products/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Tenant-Slug': TENANT_SLUG },
-        body: JSON.stringify({ name, description, pricing_mode: pricingMode, display_price_mode: displayPriceMode, is_active: isActive, category_id: categoryId })
+        body: JSON.stringify({
+          name,
+          description,
+          pricing_mode: pricingMode,
+          display_price_mode: displayPriceMode,
+          is_active: isActive,
+          category_id: categoryId || null
+        })
       });
       if (res.ok) {
         setMessage('Producto actualizado correctamente.');
@@ -108,16 +121,13 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Pestañas */}
       <div className="flex gap-1 mb-6 border-b">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab.id
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+              activeTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             {tab.label}
@@ -125,10 +135,9 @@ export default function ProductDetail() {
         ))}
       </div>
 
-      {/* Contenido de pestañas */}
       {activeTab === 'info' && (
         <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl">
-          <form onSubmit={handleSave} className="space-y-4">
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
               <input type="text" value={sku} disabled className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50" />
@@ -143,11 +152,7 @@ export default function ProductDetail() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-              <select
-                value={categoryId ?? ''}
-                onChange={e => setCategoryId(e.target.value || null)}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
+              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Sin categoría</option>
                 {categories.map((cat: any) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -181,17 +186,17 @@ export default function ProductDetail() {
                 {message}
               </div>
             )}
-            <button type="submit" disabled={saving} className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+            <button onClick={handleSave} disabled={saving} className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </button>
-          </form>
+          </div>
         </div>
       )}
 
       {activeTab === 'features' && (
         <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl">
           <h3 className="font-semibold text-gray-800 mb-4">Características y atributos</h3>
-          <FeatureEditor productId={id!} />
+          <FeatureEditor key={id} productId={id!} />
         </div>
       )}
 
@@ -203,14 +208,13 @@ export default function ProductDetail() {
           ) : !product?.features || product.features.length === 0 ? (
             <p className="text-sm text-gray-400">Primero agrega características en la pestaña "Características".</p>
           ) : (
-            <VariantEditor productId={id!} />
+            <VariantEditor key={id} productId={id!} />
           )}
         </div>
       )}
 
       {activeTab === 'images' && (
         <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl">
-          <h3 className="font-semibold text-gray-800 mb-4">Imágenes</h3>
           <ImageUploader productId={id!} />
         </div>
       )}

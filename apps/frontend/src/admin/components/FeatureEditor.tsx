@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 
 interface Attribute {
@@ -23,32 +23,31 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
   const [loading, setLoading] = useState(true);
   const [newFeatureName, setNewFeatureName] = useState('');
   const [newAttrValue, setNewAttrValue] = useState<Record<string, string>>({});
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const processingRef = useRef(false);
 
-  const triggerRefetch = () => setRefetchTrigger(c => c + 1);
-
-  useEffect(() => {
-    let cancelled = false;
+  const fetchFeatures = async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
     setLoading(true);
-    fetch(`${API_URL}/api/v1/products/${productId}`, { headers: { 'X-Tenant-Slug': TENANT_SLUG } })
-      .then(res => res.json())
-      .then(data => {
-        if (!cancelled) {
-          setFeatures(data.features || []);
-          setLoading(false);
-        }
-      })
-      .catch(err => {
-        if (!cancelled) {
-          console.error(err);
-          setLoading(false);
-        }
+    try {
+      const res = await fetch(`${API_URL}/api/v1/products/${productId}`, {
+        headers: { 'X-Tenant-Slug': TENANT_SLUG }
       });
-    return () => { cancelled = true; };
-  }, [productId, refetchTrigger]);
+      const data = await res.json();
+      setFeatures(data.features || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      processingRef.current = false;
+    }
+  };
+
+  useEffect(() => { fetchFeatures(); }, [productId]);
 
   const addFeature = async () => {
-    if (!newFeatureName.trim()) return;
+    if (!newFeatureName.trim() || processingRef.current) return;
+    processingRef.current = true;
     try {
       await fetch(`${API_URL}/api/v1/products/${productId}/features`, {
         method: 'POST',
@@ -56,15 +55,18 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         body: JSON.stringify({ name: newFeatureName.trim(), sort_order: features.length + 1 })
       });
       setNewFeatureName('');
-      triggerRefetch();
+      await fetchFeatures();
     } catch (err) {
       console.error(err);
+    } finally {
+      processingRef.current = false;
     }
   };
 
   const addAttribute = async (featureId: string) => {
     const value = newAttrValue[featureId]?.trim();
-    if (!value) return;
+    if (!value || processingRef.current) return;
+    processingRef.current = true;
     try {
       await fetch(`${API_URL}/api/v1/features/${featureId}/attributes`, {
         method: 'POST',
@@ -72,22 +74,27 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         body: JSON.stringify({ value, sort_order: 1 })
       });
       setNewAttrValue(prev => ({ ...prev, [featureId]: '' }));
-      triggerRefetch();
+      await fetchFeatures();
     } catch (err) {
       console.error(err);
+    } finally {
+      processingRef.current = false;
     }
   };
 
   const deleteFeature = async (featureId: string) => {
-    if (!confirm('¿Eliminar esta característica y todos sus atributos?')) return;
+    if (!confirm('¿Eliminar esta característica y todos sus atributos?') || processingRef.current) return;
+    processingRef.current = true;
     try {
       await fetch(`${API_URL}/api/v1/features/${featureId}`, {
         method: 'DELETE',
         headers: { 'X-Tenant-Slug': TENANT_SLUG }
       });
-      triggerRefetch();
+      await fetchFeatures();
     } catch (err) {
       console.error(err);
+    } finally {
+      processingRef.current = false;
     }
   };
 
@@ -101,7 +108,6 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
 
   return (
     <div className="space-y-6">
-      {/* Agregar nueva característica */}
       <div className="flex gap-2">
         <input
           type="text"
@@ -109,14 +115,13 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
           onChange={e => setNewFeatureName(e.target.value)}
           placeholder="Nueva característica (ej: Material)"
           className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onKeyDown={e => e.key === 'Enter' && addFeature()}
+          onKeyDown={e => { if (e.key === 'Enter') addFeature(); }}
         />
         <button onClick={addFeature} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
           Agregar
         </button>
       </div>
 
-      {/* Lista de características */}
       {features.length === 0 ? (
         <p className="text-sm text-gray-400">Este producto no tiene características. Agrega una para empezar.</p>
       ) : (
@@ -129,7 +134,6 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
               </button>
             </div>
 
-            {/* Atributos existentes */}
             <div className="flex flex-wrap gap-2 mb-3">
               {feature.attributes.map(attr => (
                 <span key={attr.id} className="px-3 py-1 bg-white border border-gray-200 rounded-full text-sm text-gray-600">
@@ -138,7 +142,6 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
               ))}
             </div>
 
-            {/* Agregar nuevo atributo */}
             <div className="flex gap-2">
               <input
                 type="text"
@@ -146,7 +149,7 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
                 onChange={e => setNewAttrValue(prev => ({ ...prev, [feature.id]: e.target.value }))}
                 placeholder="Nuevo atributo (ej: Couche)"
                 className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                onKeyDown={e => e.key === 'Enter' && addAttribute(feature.id)}
+                onKeyDown={e => { if (e.key === 'Enter') addAttribute(feature.id); }}
               />
               <button onClick={() => addAttribute(feature.id)} className="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-sm font-medium hover:bg-gray-700">
                 Agregar
