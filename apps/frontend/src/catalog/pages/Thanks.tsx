@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 export default function Thanks() {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state as { quoteRequestId?: string; publicToken?: string } | null;
+  const state = location.state as { quoteRequestId?: string; publicToken?: string; clientName?: string } | null;
+  const clientName = state?.clientName || 'Cliente';
 
   const [tenantPhone, setTenantPhone] = useState<string>('+51947112803');
 
@@ -28,8 +29,10 @@ export default function Thanks() {
     );
   }
 
-  const whatsappUrl = `https://wa.me/${tenantPhone.replace(/\D/g, '')}?text=Hola%2C%20acabo%20de%20enviar%20mi%20cotización.%20Mi%20código%20es%3A%20${state.publicToken}`;
-  const pdfUrl = `http://localhost:3000/api/v1/public/quotes/${state.publicToken}/pdf`;
+  const pdfLink = `https://itshabackend-production.up.railway.app/api/v1/public/quotes/${state.publicToken}/pdf`;
+  const whatsappUrl = `https://wa.me/${tenantPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
+    `¡Hola! Soy ${clientName} 👋\n\nAcabo de enviar mi cotización desde el catálogo web.\nAquí está mi PDF con los productos que solicité:\n📄 ${pdfLink}\n\nMe pueden contactar a este número para coordinar el pedido.\n¡Gracias!`
+  )}`;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -53,7 +56,7 @@ export default function Thanks() {
             Contactar por WhatsApp
           </a>
           <a
-            href={pdfUrl}
+            href={pdfLink}
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full bg-primary text-white py-3 rounded-xl font-semibold transition-colors"

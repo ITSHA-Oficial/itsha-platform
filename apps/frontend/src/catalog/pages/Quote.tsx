@@ -64,6 +64,7 @@ export default function Quote() {
         state: {
           quoteRequestId: response.quote_request_id,
           publicToken: response.public_token,
+          clientName: clientName.trim()
         },
       });
     } catch (err: any) {
