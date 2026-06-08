@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import ReactDOM from 'react-dom';
 import Home from './catalog/pages/Home'
 import CatalogProductDetail from './catalog/pages/ProductDetail'
 import Quote from './catalog/pages/Quote'
@@ -46,9 +47,12 @@ export default function App() {
         {/* Rutas del Catálogo Web (públicas) */}
         <Route path="/" element={
           <div className="relative min-h-screen">
-            <div className="fixed top-4 right-4 z-40">
-              <CartIcon totalItems={totalItems} onClick={() => setCartOpen(true)} />
-            </div>
+            {ReactDOM.createPortal(
+              <div className="fixed top-4 right-4 z-50">
+                <CartIcon totalItems={totalItems} onClick={() => setCartOpen(true)} />
+              </div>,
+              document.body
+            )}
             {cartOpen && (
               <CartPanel
                 items={items}
