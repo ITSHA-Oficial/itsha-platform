@@ -55,10 +55,10 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         body: JSON.stringify({ name: newFeatureName.trim(), sort_order: features.length + 1 })
       });
       setNewFeatureName('');
+      processingRef.current = false; // Desbloquear antes de recargar
       await fetchFeatures();
     } catch (err) {
       console.error(err);
-    } finally {
       processingRef.current = false;
     }
   };
@@ -74,10 +74,10 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         body: JSON.stringify({ value, sort_order: 1 })
       });
       setNewAttrValue(prev => ({ ...prev, [featureId]: '' }));
+      processingRef.current = false; // Desbloquear antes de recargar
       await fetchFeatures();
     } catch (err) {
       console.error(err);
-    } finally {
       processingRef.current = false;
     }
   };
