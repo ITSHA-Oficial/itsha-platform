@@ -63,6 +63,12 @@ router.post('/', async (req: Request, res: Response) => {
 
     const { client_name, client_phone, client_email, notes, items } = validationResult.data;
 
+    if (items.length > 50) {
+      return res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'Límite excedido: máximo 50 ítems por cotización.' }
+      });
+    }
+
     const { data: quoteRequest, error: quoteError } = await supabase
       .from('quote_requests')
       .insert({
@@ -147,6 +153,7 @@ router.post('/', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('Error en POST /quote-requests:', err);
     return res.status(500).json({
+      request_id: req.headers['x-request-id'] || crypto.randomUUID(),
       error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' }
     });
   }
@@ -188,7 +195,10 @@ router.get('/', async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error('Error en GET /quote-requests:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno' } });
+    return res.status(500).json({
+      request_id: req.headers['x-request-id'] || crypto.randomUUID(),
+      error: { code: 'INTERNAL_ERROR', message: 'Error interno' }
+    });
   }
 });
 
