@@ -5,6 +5,7 @@ export default function Settings() {
   const [name, setName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#1a56db');
+  const [logoUrl, setLogoUrl] = useState('');
   const [showCartTotal, setShowCartTotal] = useState(true);
   const [facebookUrl, setFacebookUrl] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
@@ -25,6 +26,7 @@ export default function Settings() {
         setInstagramUrl(data.instagram_url || '');
         setTiktokUrl(data.tiktok_url || '');
         setAddress(data.address || '');
+        setLogoUrl(data.logo_url || '');
       })
       .catch(console.error);
   }, []);
@@ -44,7 +46,8 @@ export default function Settings() {
           facebook_url: facebookUrl,
           instagram_url: instagramUrl,
           tiktok_url: tiktokUrl,
-          address
+          address,
+          logo_url: logoUrl || null
         })
       });
       if (res.ok) {
@@ -80,6 +83,16 @@ export default function Settings() {
             value={whatsapp}
             onChange={e => setWhatsapp(e.target.value)}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Logo (URL)</label>
+          <input
+            type="text"
+            value={logoUrl}
+            onChange={e => setLogoUrl(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="https://ejemplo.com/logo.png"
           />
         </div>
         <div>
