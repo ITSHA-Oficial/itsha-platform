@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 
@@ -16,46 +17,109 @@ const navItems = [
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { role, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/admin/login');
   };
 
+  const closeSidebar = () => setSidebarOpen(false);
+
   const filteredNav = navItems.filter(item => role && item.roles.includes(role));
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b">
-          <h1 className="text-xl font-extrabold text-blue-600">ITSHA</h1>
-          <p className="text-xs text-gray-400 mt-1">Product Manager</p>
+      {/* Overlay oscuro para móviles cuando la barra está abierta */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
+      {/* Barra lateral colapsable */}
+      <aside
+        className={`fixed lg:relative z-50 h-full bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out ${
+          sidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full lg:translate-x-0 lg:w-20'
+        }`}
+      >
+        {/* Cabecera de la barra */}
+        <div className={`p-4 border-b flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
+          {sidebarOpen && (
+            <>
+              <h1 className="text-xl font-extrabold text-blue-600">ITSHA</h1>
+              <button
+                onClick={closeSidebar}
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+                aria-label="Cerrar menú"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </>
+          )}
+          {!sidebarOpen && (
+            <span className="text-xl font-extrabold text-blue-600">I</span>
+          )}
         </div>
-        <nav className="flex-1 p-4 space-y-1">
+
+        {/* Enlaces de navegación */}
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           {filteredNav.map(item => (
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={() => { if (window.innerWidth < 1024) closeSidebar(); }}
               className={({ isActive }) =>
-                `block px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
                 }`
               }
             >
-              {item.label}
+              <span className="text-lg flex-shrink-0">
+                {item.label === 'Dashboard' && '📊'}
+                {item.label === 'Productos' && '📦'}
+                {item.label === 'Categorías' && '🏷️'}
+                {item.label === 'Cotizaciones' && '📋'}
+                {item.label === 'Importar Excel' && '📥'}
+                {item.label === 'Exportar Excel' && '📤'}
+                {item.label === 'Versiones' && '🔄'}
+                {item.label === 'Auditoría' && '🔍'}
+                {item.label === 'Configuración' && '⚙️'}
+              </span>
+              {sidebarOpen && <span>{item.label}</span>}
             </NavLink>
           ))}
         </nav>
-        <div className="p-4 border-t">
+
+        {/* Botón de cerrar sesión */}
+        <div className="p-2 border-t">
           <button
             onClick={handleLogout}
-            className="w-full px-4 py-2 text-sm text-gray-500 hover:text-red-600 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-red-600 transition-colors"
           >
-            Cerrar sesión
+            <span className="text-lg flex-shrink-0">🚪</span>
+            {sidebarOpen && <span>Cerrar sesión</span>}
           </button>
         </div>
       </aside>
-      <main className="flex-1 p-8">{children}</main>
+
+      {/* Contenido principal */}
+      <main className="flex-1 p-4 lg:p-8">
+        {/* Botón de hamburguesa (visible en móvil y cuando la barra está cerrada en escritorio) */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden mb-4 w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+          aria-label="Abrir menú"
+        >
+          <span className="block w-5 h-0.5 bg-gray-600 rounded-full"></span>
+          <span className="block w-5 h-0.5 bg-gray-600 rounded-full"></span>
+          <span className="block w-5 h-0.5 bg-gray-600 rounded-full"></span>
+        </button>
+        {children}
+      </main>
     </div>
   );
 }
