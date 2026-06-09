@@ -63,6 +63,7 @@ router.post('/', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('Error en POST /products:', err);
     return res.status(500).json({
+      request_id: req.headers['x-request-id'] || 'sin-id',
       error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' }
     });
   }
@@ -94,7 +95,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     const { category_id, pricing_mode, is_active, q, page, limit } = req.query;
     const pageNum = parseInt(page as string) || 1;
-    const limitNum = Math.min(parseInt(limit as string) || 20, 100);
+    const limitNum = Math.min(parseInt(limit as string) || 20, 10000);
     const offset = (pageNum - 1) * limitNum;
 
     let query = supabase
@@ -126,6 +127,7 @@ router.get('/', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('Error en GET /products:', err);
     return res.status(500).json({
+      request_id: req.headers['x-request-id'] || 'sin-id',
       error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' }
     });
   }

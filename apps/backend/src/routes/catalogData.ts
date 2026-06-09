@@ -37,54 +37,66 @@ router.get('/', async (req: Request, res: Response) => {
       .eq('tenant_id', tenant.id)
       .eq('is_active', true)
       .is('deleted_at', null)
+      .limit(5000)
       .order('name', { ascending: true });
 
-    const enrichedProducts = products ? await Promise.all(products.map(async (product) => {
-      const { data: features } = await supabase
-        .from('features')
-        .select('id, name, sort_order')
-        .eq('product_id', product.id)
-        .is('deleted_at', null)
-        .order('sort_order', { ascending: true });
+    // Consultas consolidadas para todos los productos
+    const productIds = products ? products.map(p => p.id) : [];
 
-      let featuresWithAttrs: any[] = [];
-      if (features) {
-        featuresWithAttrs = await Promise.all(features.map(async (f) => {
-          const { data: attrs } = await supabase
-            .from('attributes')
-            .select('id, value, sort_order')
-            .eq('feature_id', f.id)
-            .is('deleted_at', null)
-            .order('sort_order', { ascending: true });
-          return { ...f, attributes: attrs || [] };
-        }));
-      }
+    // Obtener todas las features de una sola vez
+    const { data: allFeatures } = await supabase
+      .from('features')
+      .select('id, product_id, name, sort_order')
+      .in('product_id', productIds)
+      .is('deleted_at', null)
+      .order('sort_order', { ascending: true });
 
-      const { data: variants } = await supabase
-        .from('variants')
-        .select('id, sku_variant, variant_signature, price, min_quantity, is_active')
-        .eq('product_id', product.id)
-        .is('deleted_at', null);
+    // Obtener todos los feature_ids para la consulta de attributes
+    const featureIds = allFeatures ? allFeatures.map(f => f.id) : [];
 
-      // Obtener la imagen primaria del producto
-      const { data: primaryImage } = await supabase
-        .from('product_images')
-        .select('url')
-        .eq('product_id', product.id)
-        .eq('is_primary', true)
-        .is('deleted_at', null)
-        .maybeSingle();
+    // Obtener todos los atributos de una sola vez
+    const { data: allAttributes } = featureIds.length > 0 ? await supabase
+      .from('attributes')
+      .select('id, feature_id, value, sort_order')
+      .in('feature_id', featureIds)
+      .is('deleted_at', null)
+      .order('sort_order', { ascending: true }) : { data: [] };
 
+    // Obtener todas las variantes de una sola vez
+    const { data: allVariants } = await supabase
+      .from('variants')
+      .select('id, product_id, sku_variant, variant_signature, price, min_quantity, is_active')
+      .in('product_id', productIds)
+      .is('deleted_at', null);
+
+    // Obtener todas las imágenes primarias de una sola vez
+    const { data: allImages } = await supabase
+      .from('product_images')
+      .select('product_id, url')
+      .in('product_id', productIds)
+      .eq('is_primary', true)
+      .is('deleted_at', null);
+
+    // Construir el array enriquecido con los datos ya en memoria
+    const enrichedProducts = products ? products.map(product => {
+      const features = (allFeatures || []).filter(f => f.product_id === product.id);
+      const featuresWithAttrs = features.map(f => ({
+        ...f,
+        attributes: (allAttributes || []).filter(a => a.feature_id === f.id)
+      }));
+
+      const variants = (allVariants || []).filter(v => v.product_id === product.id);
+      const primaryImage = (allImages || []).find(img => img.product_id === product.id);
       const category = categories?.find(c => c.id === product.category_id);
 
       return {
         ...product,
         category_slug: category ? category.slug : null,
         features: featuresWithAttrs,
-        variants: variants || [],
-        primary_image_url: primaryImage?.url || null  // ← AHORA SÍ OBTIENE LA IMAGEN REAL
+        variants: variants,
+        primary_image_url: primaryImage?.url || null
       };
-    })) : [];
+    }) : [];
 
     const catalog = {
       schema_version: 1,
@@ -99,7 +111,10 @@ router.get('/', async (req: Request, res: Response) => {
     return res.json(catalog);
   } catch (err: any) {
     console.error('Error al generar catálogo dinámico:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno.' } });
+    return res.status(500).json({
+      request_id: req.headers['x-request-id'] || 'sin-id',
+      error: { code: 'INTERNAL_ERROR', message: 'Error interno al generar el catálogo.' }
+    });
   }
 });
 
