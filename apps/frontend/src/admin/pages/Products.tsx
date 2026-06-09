@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { TENANT_SLUG } from '../../catalog/utils/api';
+import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 import useProducts from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
 import AdminSearchBar from '../components/AdminSearchBar';
@@ -8,6 +8,7 @@ export default function Products() {
   const { products: allProducts, pagination, loading, fetchProducts } = useProducts(TENANT_SLUG);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Cargar una página grande de productos (500) una sola vez al montar
   useEffect(() => {
@@ -25,6 +26,27 @@ export default function Products() {
         (p.description && p.description.toLowerCase().includes(q))
     );
   }, [allProducts, search]);
+
+  const handleDelete = async (productId: string) => {
+    if (!confirm('¿Eliminar este producto? Se ocultará del catálogo público.')) return;
+    setDeletingId(productId);
+    try {
+      const res = await fetch(`${API_URL}/api/v1/products/${productId}`, {
+        method: 'DELETE',
+        headers: { 'X-Tenant-Slug': TENANT_SLUG }
+      });
+      if (res.ok) {
+        fetchProducts(1, { limit: '500' }); // Recargar la lista
+      } else {
+        alert('Error al eliminar el producto.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error de conexión.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -57,12 +79,13 @@ export default function Products() {
               <th className="px-6 py-3">Pricing</th>
               <th className="px-6 py-3">Precio</th>
               <th className="px-6 py-3">Activo</th>
+              <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {products.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
                   No se encontraron productos.
                 </td>
               </tr>
@@ -81,6 +104,15 @@ export default function Products() {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {product.is_active ? 'Activo' : 'Inactivo'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      disabled={deletingId === product.id}
+                      className="text-red-500 text-sm hover:underline disabled:opacity-50"
+                    >
+                      {deletingId === product.id ? 'Eliminando...' : 'Eliminar'}
+                    </button>
                   </td>
                 </tr>
               ))
