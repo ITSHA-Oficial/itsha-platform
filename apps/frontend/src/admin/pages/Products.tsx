@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 import useProducts from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
@@ -9,11 +9,22 @@ export default function Products() {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const hasLoaded = useRef(false);
 
   // Cargar una página grande de productos (500) una sola vez al montar
   useEffect(() => {
-    fetchProducts(1, { limit: '500' });
-  }, []); // <-- Dependencia vacía para ejecutar solo una vez
+    if (!hasLoaded.current) {
+      hasLoaded.current = true;
+      fetchProducts(1, { limit: '500' });
+    }
+  }, [fetchProducts]);
+
+  // Recargar cuando la página recibe el foco de nuevo (ej: al volver de editar)
+  useEffect(() => {
+    const handleFocus = () => fetchProducts(1, { limit: '500' });
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [fetchProducts]);
 
   // Filtrado local en tiempo real
   const products = useMemo(() => {
