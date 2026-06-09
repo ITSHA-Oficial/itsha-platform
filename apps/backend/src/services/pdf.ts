@@ -62,6 +62,8 @@ export function generateQuotePDF(data: QuoteData): Promise<Buffer> {
     doc.moveDown();
     const grandTotal = data.items.reduce((sum, i) => sum + (i.total_price || 0) * i.quantity, 0);
     doc.fontSize(10).font('Helvetica-Bold').text(`Total general: S/ ${grandTotal.toFixed(2)}`, { align: 'right' });
-    doc.end(); // ← CIERRE DEL DOCUMENTO
+
+    // CORRECCIÓN CRÍTICA: Finalizar el documento
+    doc.end();
   });
 }
