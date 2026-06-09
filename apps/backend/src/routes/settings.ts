@@ -1,5 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { getSupabaseClient } from '../db/supabase';
+import multer from 'multer';
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
 
 const router = Router();
 
@@ -102,6 +105,48 @@ router.put('/', async (req: Request, res: Response) => {
     return res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' }
     });
+  }
+});
+
+router.post('/logo', upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({ error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere X-Tenant-Slug' } });
+    }
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', tenantSlug)
+      .eq('active', true)
+      .single();
+    if (tenantError || !tenant) {
+      return res.status(404).json({ error: { code: 'TENANT_NOT_FOUND', message: 'Tenant no encontrado' } });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: { code: 'NO_FILE', message: 'No se ha subido ningún archivo.' } });
+    }
+
+    const filePath = `${tenantSlug}/logo.webp`;
+    const { error: uploadError } = await supabase.storage
+      .from('logos')
+      .upload(filePath, req.file.buffer, { contentType: 'image/webp', upsert: true });
+
+    if (uploadError) {
+      return res.status(500).json({ error: { code: 'STORAGE_ERROR', message: 'Error al subir el logo.' } });
+    }
+
+    const { data: publicUrl } = supabase.storage.from('logos').getPublicUrl(filePath);
+
+    await supabase.from('tenants').update({ logo_url: publicUrl.publicUrl }).eq('id', tenant.id);
+
+    return res.json({ logo_url: publicUrl.publicUrl });
+  } catch (err: any) {
+    console.error('Error en POST /settings/logo:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno.' } });
   }
 });
 
