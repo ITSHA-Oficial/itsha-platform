@@ -90,10 +90,11 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         method: 'DELETE',
         headers: { 'X-Tenant-Slug': TENANT_SLUG }
       });
+      // Desbloquear manualmente antes de recargar
+      processingRef.current = false;
       await fetchFeatures();
     } catch (err) {
       console.error(err);
-    } finally {
       processingRef.current = false;
     }
   };
