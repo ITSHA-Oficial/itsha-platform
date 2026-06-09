@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import useCatalog from '../hooks/useCatalog';
 import CartIcon from '../components/CartIcon';
+import ImageGallery from '../components/ImageGallery';
 import SpecConfigurator from '../components/SpecConfigurator';
 import FormulaInputs from '../components/FormulaInputs';
 import SearchBar from '../components/SearchBar';
@@ -52,6 +53,9 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
   }
 
   const placeholder = '/assets/placeholder.svg';
+  const productImages = product.images?.length
+    ? product.images.map((img: any) => ({ url: img.url, alt_text: img.alt_text || product.name }))
+    : [{ url: product.primary_image_url || placeholder, alt_text: product.name }];
 
   const handleAddToCart = () => {
     const variant = product.variants?.find((v: any) => {
@@ -119,13 +123,7 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="aspect-video bg-gray-100">
-            <img
-              src={product.primary_image_url || placeholder}
-              alt={product.name}
-              className="w-full h-full object-contain"
-            />
-          </div>
+          <ImageGallery images={productImages} placeholder={placeholder} />
 
           <div className="p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h2>
