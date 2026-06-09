@@ -93,6 +93,13 @@ export async function processNextJob(): Promise<boolean> {
           };
         }));
 
+        // Obtener datos del tenant necesarios para el PDF
+        const { data: tenant } = await supabase
+          .from('tenants')
+          .select('whatsapp, logo_url, primary_color')
+          .eq('id', job.tenant_id)
+          .single();
+
         // Generar PDF
         const pdfData = {
           client_name: quote.client_name,
@@ -100,7 +107,12 @@ export async function processNextJob(): Promise<boolean> {
           items: enrichedItems,
           notes: quote.notes,
         };
-        const pdfBuffer = await generateQuotePDF(pdfData);
+        const pdfBuffer = await generateQuotePDF({
+          ...pdfData,
+          logoUrl: tenant?.logo_url || null,
+          primaryColor: tenant?.primary_color || null,
+          whatsapp: tenant?.whatsapp || null
+        });
         console.log('[Worker] PDF generado correctamente');
 
         // Subir a Storage
@@ -119,13 +131,6 @@ export async function processNextJob(): Promise<boolean> {
 
         if (signedError || !signedData?.signedUrl) throw new Error('Error al generar URL firmada');
         console.log('[Worker] URL firmada generada');
-
-        // Obtener WhatsApp del tenant
-        const { data: tenant } = await supabase
-          .from('tenants')
-          .select('whatsapp')
-          .eq('id', job.tenant_id)
-          .single();
 
         const whatsappUrl = buildWhatsAppUrl(
           tenant?.whatsapp || '+51947112803',
