@@ -9,10 +9,11 @@ import { fetchTenantSettings } from '../utils/api';
 
 interface HomeProps {
   totalItems: number;
+  cartOpen: boolean;
   onCartClick: () => void;
 }
 
-export default function Home({ totalItems, onCartClick }: HomeProps) {
+export default function Home({ totalItems, cartOpen, onCartClick }: HomeProps) {
   const { products, categories, tenant, loading, error } = useCatalog();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
@@ -126,7 +127,7 @@ export default function Home({ totalItems, onCartClick }: HomeProps) {
               </svg>
             </button>
             
-            <CartIcon totalItems={totalItems} onClick={onCartClick} />
+            <CartIcon totalItems={totalItems} isActive={cartOpen} onClick={onCartClick} />
           </div>
         </div>
 

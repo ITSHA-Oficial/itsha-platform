@@ -66,8 +66,8 @@ function AppContent() {
 
       <Routes>
         {/* Rutas del Catálogo Web (públicas) */}
-        <Route path="/" element={<Home totalItems={totalItems} onCartClick={() => setCartOpen(true)} />} />
-        <Route path="/producto/:sku" element={<CatalogProductDetail onAddToCart={addItem} />} />
+        <Route path="/" element={<Home totalItems={totalItems} cartOpen={cartOpen} onCartClick={() => setCartOpen(true)} />} />
+        <Route path="/producto/:sku" element={<CatalogProductDetail onAddToCart={addItem} totalItems={totalItems} onCartClick={() => setCartOpen(true)} />} />
         <Route path="/cotizar" element={<Quote />} />
         <Route path="/gracias" element={<Thanks />} />
 

@@ -1,15 +1,18 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import useCatalog from '../hooks/useCatalog';
+import CartIcon from '../components/CartIcon';
 import SpecConfigurator from '../components/SpecConfigurator';
 import FormulaInputs from '../components/FormulaInputs';
 import SearchBar from '../components/SearchBar';
 
 interface ProductDetailProps {
   onAddToCart: (item: any) => void;
+  totalItems: number;
+  onCartClick: () => void;
 }
 
-export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
+export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: ProductDetailProps) {
   const { sku } = useParams<{ sku: string }>();
   const navigate = useNavigate();
   const { products, tenant, loading, error } = useCatalog();
@@ -99,6 +102,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </button>
+            <CartIcon totalItems={totalItems} onClick={onCartClick} />
           </div>
         </div>
         {showSearch && (
