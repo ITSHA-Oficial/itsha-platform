@@ -11,9 +11,10 @@ interface SearchBarProps {
   getProductUrl?: (product: Product) => string; // Para navegar al hacer clic
   onSearch?: (query: string) => void;      // Para filtrar en tiempo real
   fetchSuggestions?: (query: string) => Promise<Product[]>; // Para búsqueda remota
+  onSelectProduct?: (product: Product) => void; // Para manejar acciones extra al seleccionar
 }
 
-export default function SearchBar({ products = [], getProductUrl, onSearch, fetchSuggestions }: SearchBarProps) {
+export default function SearchBar({ products = [], getProductUrl, onSearch, fetchSuggestions, onSelectProduct }: SearchBarProps) {
   const [value, setValue] = useState('');
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -78,6 +79,9 @@ export default function SearchBar({ products = [], getProductUrl, onSearch, fetc
     setShowDropdown(false);
     if (getProductUrl) {
       window.location.href = getProductUrl(product);
+    }
+    if (onSelectProduct) {
+      onSelectProduct(product);
     }
   };
 

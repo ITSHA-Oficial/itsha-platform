@@ -46,13 +46,13 @@ function AppContent() {
   return (
     <div className="relative min-h-screen">
       {/* Carrito siempre visible (portal) */}
-      {!location.pathname.startsWith('/admin') &&
+      {/* {!location.pathname.startsWith('/admin') &&
         ReactDOM.createPortal(
           <div className="fixed top-4 right-4 z-50">
             <CartIcon totalItems={totalItems} onClick={() => setCartOpen(true)} />
           </div>,
           document.body
-        )}
+        )} */}
       {!location.pathname.startsWith('/admin') &&
         cartOpen && (
           <CartPanel
@@ -66,7 +66,7 @@ function AppContent() {
 
       <Routes>
         {/* Rutas del Catálogo Web (públicas) */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Home totalItems={totalItems} onCartClick={() => setCartOpen(true)} />} />
         <Route path="/producto/:sku" element={<CatalogProductDetail onAddToCart={addItem} />} />
         <Route path="/cotizar" element={<Quote />} />
         <Route path="/gracias" element={<Thanks />} />

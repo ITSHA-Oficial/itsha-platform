@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import useCatalog from '../hooks/useCatalog';
 import SpecConfigurator from '../components/SpecConfigurator';
-import SearchBar from '../components/SearchBar';
 import FormulaInputs from '../components/FormulaInputs';
-import { useState, useEffect } from 'react';
+import SearchBar from '../components/SearchBar';
 
 interface ProductDetailProps {
   onAddToCart: (item: any) => void;
@@ -12,23 +12,17 @@ interface ProductDetailProps {
 export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
   const { sku } = useParams<{ sku: string }>();
   const navigate = useNavigate();
-  const { products, loading, error } = useCatalog();
+  const { products, tenant, loading, error } = useCatalog();
 
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [formulaInputs, setFormulaInputs] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(1);
-
-  // Reset state when SKU changes
-  useEffect(() => {
-    setSelectedOptions({});
-    setFormulaInputs({});
-    setQuantity(1);
-  }, [sku]);
+  const [showSearch, setShowSearch] = useState(false);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -47,7 +41,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <p className="text-gray-500 text-lg mb-4">Producto no encontrado</p>
-        <button onClick={() => navigate('/')} className="text-primary underline">
+        <button onClick={() => navigate('/')} className="text-blue-600 underline">
           Volver al inicio
         </button>
       </div>
@@ -82,20 +76,41 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header con logo y lupa */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 space-y-2">
-          <div className="flex items-center gap-2">
+        <div className="max-w-4xl mx-auto px-3 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
             <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700 shrink-0">
               ← Volver
             </button>
+            {tenant?.logo_url && (
+              <img src={tenant.logo_url} alt="Logo" className="h-8 w-8 rounded-full object-cover" />
+            )}
             <h1 className="text-lg font-bold text-gray-900 truncate">{product.name}</h1>
           </div>
-          {/* Barra de búsqueda reutilizada */}
-          <SearchBar
-            products={products}
-            getProductUrl={(product) => `/producto/${product.sku}`}
-          />
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowSearch(!showSearch)}
+              className={`w-10 h-10 flex items-center justify-center rounded-full ${
+                showSearch ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
         </div>
+        {showSearch && (
+          <div className="px-3 pb-3 border-t bg-white">
+            <SearchBar
+              products={products}
+              onSearch={() => {}}
+              getProductUrl={(p: any) => `/producto/${p.sku}`}
+              onSelectProduct={() => setShowSearch(false)}
+            />
+          </div>
+        )}
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
@@ -147,7 +162,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
 
               <button
                 onClick={handleAddToCart}
-                className="flex-1 bg-primary text-white py-3 px-6 rounded-xl font-semibold transition-colors"
+                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
               >
                 Agregar al carrito
               </button>
