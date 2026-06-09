@@ -109,7 +109,7 @@ router.get('/', async (req: Request, res: Response) => {
     if (q) query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%`);
 
     const { data: products, error, count } = await query
-      .order('created_at', { ascending: false })
+      .order('name', { ascending: true })
       .range(offset, offset + limitNum - 1);
 
     if (error) throw error;

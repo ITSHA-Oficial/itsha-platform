@@ -130,6 +130,9 @@ export async function generateCatalogJSON(tenantId: string): Promise<CatalogDTO>
     };
   }));
 
+  // Ordenar productos alfabéticamente por nombre
+  enrichedProducts.sort((a, b) => a.name.localeCompare(b.name));
+
   // 5. Armar el DTO completo
   return {
     schema_version: 1,

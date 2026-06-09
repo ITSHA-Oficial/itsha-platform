@@ -36,7 +36,8 @@ router.get('/', async (req: Request, res: Response) => {
       .select('id, sku, name, description, category_id, pricing_mode, display_price_mode, formula_vars, is_active')
       .eq('tenant_id', tenant.id)
       .eq('is_active', true)
-      .is('deleted_at', null);
+      .is('deleted_at', null)
+      .order('name', { ascending: true });
 
     const enrichedProducts = products ? await Promise.all(products.map(async (product) => {
       const { data: features } = await supabase
