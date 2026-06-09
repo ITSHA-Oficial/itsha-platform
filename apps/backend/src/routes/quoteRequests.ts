@@ -44,7 +44,10 @@ router.post('/', async (req: Request, res: Response) => {
       .maybeSingle();
 
     if (existingKey) {
-      return res.status(200).json(existingKey.response_json);
+      return res.status(409).json({
+        error: { code: 'IDEMPOTENCY_CONFLICT', message: 'Esta cotización ya fue enviada anteriormente.' },
+        data: existingKey.response_json
+      });
     }
 
     const validationResult = createQuoteRequestSchema.safeParse(req.body);
@@ -102,18 +105,25 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
+    const newIdempotencyId = crypto.randomUUID(); // Generar antes de insertar
+
     const { error: jobError } = await supabase
       .from('background_jobs')
       .insert({
         tenant_id: tenant.id,
         job_type: 'generate_quote',
         priority: 1,
+        reference_id: newIdempotencyId,
         payload: { quote_request_id: quoteRequest.id },
         status: 'pending'
       });
 
     if (jobError) {
       console.error('Error al encolar job:', jobError);
+      // Si el job no se encola, la cotización no se procesará. Informamos al cliente.
+      return res.status(500).json({
+        error: { code: 'JOB_CREATION_FAILED', message: 'Error al encolar la generación del PDF. Intente nuevamente.' }
+      });
     }
 
     const responseBody = {
@@ -160,7 +170,7 @@ router.get('/', async (req: Request, res: Response) => {
     const limitNum = Math.min(parseInt(limit as string) || 20, 100);
     const offset = (pageNum - 1) * limitNum;
 
-    let query = supabase.from('quote_requests').select('*', { count: 'exact' }).eq('tenant_id', tenant.id).order('created_at', { ascending: false });
+    let query = supabase.from('quote_requests').select('id, client_name, client_phone, client_email, status, processing_status, notes, created_at', { count: 'exact' }).eq('tenant_id', tenant.id).order('created_at', { ascending: false });
 
     if (status) query = query.eq('status', status);
     if (processing_status) query = query.eq('processing_status', processing_status);
@@ -201,6 +211,19 @@ router.put('/:id/status', async (req: Request, res: Response) => {
     const { data: tenant } = await supabase.from('tenants').select('id').eq('slug', tenantSlug).eq('active', true).single();
     if (!tenant) {
       return res.status(404).json({ error: { code: 'TENANT_NOT_FOUND', message: 'Tenant no encontrado' } });
+    }
+
+    // Verificar que el processing_status permita el cambio
+    const { data: existing } = await supabase
+      .from('quote_requests')
+      .select('processing_status')
+      .eq('id', id)
+      .single();
+
+    if (existing && (existing.processing_status === 'failed' || existing.processing_status === 'expired')) {
+      return res.status(422).json({
+        error: { code: 'INVALID_TRANSITION', message: `No se puede cambiar el estado porque el procesamiento técnico falló (${existing.processing_status}).` }
+      });
     }
 
     const { data: quoteRequest, error } = await supabase
