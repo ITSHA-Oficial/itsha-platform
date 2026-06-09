@@ -52,7 +52,6 @@ export default function Products() {
 
       {/* Única barra de búsqueda: predictiva + filtro local en tiempo real */}
       <AdminSearchBar
-        onSelectProduct={(product) => navigate(`/admin/products/${product.id}`)}
         onSearch={(query) => setSearch(query)}
       />
 
