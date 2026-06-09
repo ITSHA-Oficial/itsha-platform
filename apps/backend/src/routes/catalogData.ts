@@ -39,6 +39,13 @@ router.get('/', async (req: Request, res: Response) => {
       .is('deleted_at', null)
       .order('name', { ascending: true });
 
+    const { data: allImages } = await supabase
+      .from('product_images')
+      .select('id, product_id, url, alt_text')
+      .in('product_id', products?.map(p => p.id) || [])
+      .is('deleted_at', null)
+      .order('sort_order', { ascending: true });
+
     const enrichedProducts = products ? await Promise.all(products.map(async (product) => {
       const { data: features } = await supabase
         .from('features')
@@ -81,6 +88,7 @@ router.get('/', async (req: Request, res: Response) => {
         category_slug: category ? category.slug : null,
         features: featuresWithAttrs,
         variants: variants || [],
+        images: (allImages || []).filter(img => img.product_id === product.id).map(img => ({ url: img.url })),
         primary_image_url: primaryImage?.url || null
       };
     })) : [];
