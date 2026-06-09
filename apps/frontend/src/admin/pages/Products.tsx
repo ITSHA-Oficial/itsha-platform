@@ -1,24 +1,20 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { TENANT_SLUG } from '../../catalog/utils/api';
 import useProducts from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
 import AdminSearchBar from '../components/AdminSearchBar';
 
 export default function Products() {
-  const { products: allProducts, loading, fetchProducts } = useProducts(TENANT_SLUG);
+  const { products: allProducts, pagination, loading, fetchProducts } = useProducts(TENANT_SLUG);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const hasLoaded = useRef(false);
 
-  // Cargar TODOS los productos (hasta 5000) una sola vez al montar la página
+  // Cargar una página grande de productos (500) una sola vez al montar
   useEffect(() => {
-    if (!hasLoaded.current) {
-      hasLoaded.current = true;
-      fetchProducts(1, { limit: '5000' });
-    }
-  }, [fetchProducts]);
+    fetchProducts(1, { limit: '500' });
+  }, []); // <-- Dependencia vacía para ejecutar solo una vez
 
-  // Filtrar localmente sobre toda la lista de productos
+  // Filtrado local en tiempo real
   const products = useMemo(() => {
     if (!search.trim()) return allProducts;
     const q = search.toLowerCase().trim();
@@ -50,10 +46,8 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Barra de búsqueda simplificada */}
       <AdminSearchBar onSearch={(query) => setSearch(query)} />
 
-      {/* Tabla de productos */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
@@ -94,6 +88,20 @@ export default function Products() {
           </tbody>
         </table>
       </div>
+
+      {pagination.total_pages > 1 && (
+        <div className="flex justify-center gap-2 mt-4">
+          {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map(page => (
+            <button
+              key={page}
+              onClick={() => fetchProducts(page, { limit: '500' })}
+              className={`px-3 py-1 rounded-lg text-sm ${page === pagination.page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              {page}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

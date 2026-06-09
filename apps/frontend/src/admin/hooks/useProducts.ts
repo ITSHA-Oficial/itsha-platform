@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { API_URL } from '../../catalog/utils/api';
 
 interface Product {
@@ -25,8 +25,11 @@ export default function useProducts(tenantSlug: string) {
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20, total: 0, total_pages: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isFetchingRef = useRef(false);
 
-  const fetchProducts = async (page = 1, filters?: Record<string, string>) => {
+  const fetchProducts = useCallback(async (page = 1, filters?: Record<string, string>) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -42,10 +45,9 @@ export default function useProducts(tenantSlug: string) {
       setError(err.message);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  };
-
-  useEffect(() => { fetchProducts(); }, []);
+  }, [tenantSlug]);
 
   return { products, pagination, loading, error, fetchProducts };
 }
