@@ -16,8 +16,8 @@ export interface QuoteData {
   whatsapp?: string | null;
 }
 
-export function generateQuotePDF(data: QuoteData): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+export async function generateQuotePDF(data: QuoteData): Promise<Buffer> {
+  return new Promise(async (resolve, reject) => {
     const doc = new PDFDocument({ margin: 50 });
     const chunks: Buffer[] = [];
 
@@ -25,39 +25,41 @@ export function generateQuotePDF(data: QuoteData): Promise<Buffer> {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    // Configuración de estilo
     const primaryColor = data.primaryColor || '#1a56db';
-    const lightGray = '#f3f4f6';
     const darkGray = '#6b7280';
+    const lightGray = '#f3f4f6';
 
     // === ENCABEZADO ===
-    // Línea superior de color
     doc.rect(0, 0, doc.page.width, 3).fill(primaryColor);
 
-    // Logo (esquina superior derecha)
+    // Intentar cargar y dibujar el logo (de forma síncrona dentro del flujo)
+    let logoLoaded = false;
     if (data.logoUrl) {
       try {
-        // Nota: Necesitamos una librería como node-fetch o axios para descargar la imagen.
-        // Como esto es un servicio interno, podemos usar la versión global de fetch en Node 18+.
-        fetch(data.logoUrl)
-          .then(response => response.arrayBuffer())
-          .then(buffer => {
-            doc.image(Buffer.from(buffer), doc.page.width - 120, 20, { width: 80 });
-            doc.moveDown(2);
-          })
-          .catch(err => console.warn('No se pudo cargar el logo para el PDF:', err));
+        const response = await fetch(data.logoUrl);
+        if (response.ok) {
+          const buffer = await response.arrayBuffer();
+          doc.image(Buffer.from(buffer), doc.page.width - 120, 20, { width: 80 });
+          logoLoaded = true;
+          doc.moveDown(2);
+        }
       } catch (err) {
-        console.warn('Error al cargar el logo:', err);
+        console.warn('No se pudo cargar el logo para el PDF:', err);
       }
     }
 
-    // Título de la empresa y documento
+    // Si no hay logo, solo bajamos un espacio para que el título no quede pegado arriba
+    if (!logoLoaded) {
+      doc.moveDown(1);
+    }
+
+    // Título
     doc.fontSize(20).font('Helvetica-Bold').fillColor(primaryColor).text('Cotización', { align: 'center' });
     doc.moveDown(0.5);
     doc.fontSize(10).font('Helvetica').fillColor(darkGray).text(`Fecha: ${new Date().toLocaleDateString('es-PE')}`, { align: 'right' });
     doc.moveDown(1.5);
 
-    // === DATOS DEL CLIENTE ===
+    // Datos del cliente
     doc.fontSize(12).font('Helvetica-Bold').fillColor(primaryColor).text('Datos del cliente');
     doc.moveDown(0.5);
     doc.fontSize(10).font('Helvetica').fillColor('black');
@@ -66,34 +68,31 @@ export function generateQuotePDF(data: QuoteData): Promise<Buffer> {
     if (data.notes) doc.text(`Notas: ${data.notes}`);
     doc.moveDown(1.5);
 
-    // === TABLA DE ITEMS ===
+    // Tabla de items
     doc.fontSize(12).font('Helvetica-Bold').fillColor(primaryColor).text('Productos solicitados');
     doc.moveDown(0.8);
 
-    // Cabecera de la tabla
     const tableTop = doc.y;
     const colX = { producto: 50, cantidad: 300, precio: 370, total: 450 };
-    
+
     doc.fontSize(9).font('Helvetica-Bold').fillColor('black');
     doc.text('Producto', colX.producto, tableTop);
     doc.text('Cant.', colX.cantidad, tableTop);
     doc.text('Precio', colX.precio, tableTop);
     doc.text('Total', colX.total, tableTop);
 
-    // Línea separadora
     doc.moveDown(0.5);
     const lineY = doc.y;
     doc.rect(50, lineY, doc.page.width - 100, 1).fill(primaryColor);
     doc.moveDown(0.8);
 
     doc.font('Helvetica').fillColor('black');
-    data.items.forEach(item => {
+    data.items.forEach((item, index) => {
       const y = doc.y;
       doc.fontSize(9);
       const name = item.variant_signature ? `${item.product_name} (${item.variant_signature})` : item.product_name;
-      
-      // Fondo alterno para las filas
-      if (data.items.indexOf(item) % 2 === 0) {
+
+      if (index % 2 === 0) {
         doc.rect(45, y - 2, doc.page.width - 90, 16).fill(lightGray);
         doc.fillColor('black');
       }
@@ -107,19 +106,17 @@ export function generateQuotePDF(data: QuoteData): Promise<Buffer> {
 
     doc.moveDown(1);
 
-    // Total general
+    // Total
     const grandTotal = data.items.reduce((sum, i) => sum + (i.total_price || 0) * i.quantity, 0);
     doc.fontSize(10).font('Helvetica-Bold').fillColor(primaryColor).text(`Total general: S/ ${grandTotal.toFixed(2)}`, { align: 'right' });
-
     doc.moveDown(3);
 
-    // === PIE DE PÁGINA ===
+    // Pie de página
     doc.fontSize(8).font('Helvetica').fillColor(darkGray).text('Gracias por tu preferencia. Para cualquier consulta, comunícate con nosotros.', { align: 'center' });
     if (data.whatsapp) {
       doc.text(`WhatsApp: ${data.whatsapp}`, { align: 'center' });
     }
 
-    // CORRECCIÓN CRÍTICA: Finalizar el documento
     doc.end();
   });
 }

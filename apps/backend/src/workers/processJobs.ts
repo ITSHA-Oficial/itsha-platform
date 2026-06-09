@@ -96,9 +96,13 @@ export async function processNextJob(): Promise<boolean> {
         // Obtener datos del tenant necesarios para el PDF
         const { data: tenant } = await supabase
           .from('tenants')
-          .select('whatsapp, logo_url, primary_color')
+          .select('slug, whatsapp, logo_url, primary_color')
           .eq('id', job.tenant_id)
           .single();
+
+        if (!tenant) {
+          throw new Error(`Tenant no encontrado para id: ${job.tenant_id}`);
+        }
 
         // Generar PDF
         const pdfData = {
@@ -109,14 +113,14 @@ export async function processNextJob(): Promise<boolean> {
         };
         const pdfBuffer = await generateQuotePDF({
           ...pdfData,
-          logoUrl: tenant?.logo_url || null,
-          primaryColor: tenant?.primary_color || null,
-          whatsapp: tenant?.whatsapp || null
+          logoUrl: tenant.logo_url || null,
+          primaryColor: tenant.primary_color || null,
+          whatsapp: tenant.whatsapp || null
         });
         console.log('[Worker] PDF generado correctamente');
 
         // Subir a Storage
-        const filePath = `leads-private/lrimprenta/quote_${quoteId}.pdf`;
+        const filePath = `leads-private/${tenant.slug}/quote_${quoteId}.pdf`;
         const { error: uploadError } = await supabase.storage
           .from('leads-private')
           .upload(filePath, pdfBuffer, { contentType: 'application/pdf', upsert: true });
