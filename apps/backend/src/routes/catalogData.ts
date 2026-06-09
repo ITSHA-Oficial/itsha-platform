@@ -54,16 +54,25 @@ router.get('/', async (req: Request, res: Response) => {
     // Obtener todos los feature_ids para la consulta de attributes
     const featureIds = allFeatures ? allFeatures.map(f => f.id) : [];
 
-    // Obtener todos los atributos de una sola vez (CORREGIDO)
+    // Obtener todos los atributos de una sola vez
     let allAttributes: any[] = [];
     if (featureIds.length > 0) {
-      const { data: attrs } = await supabase
-        .from('attributes')
-        .select('id, feature_id, value, sort_order')
-        .in('feature_id', featureIds)
-        .is('deleted_at', null)
-        .order('sort_order', { ascending: true });
-      allAttributes = attrs || [];
+      try {
+        const { data: attrs, error: attrError } = await supabase
+          .from('attributes')
+          .select('id, feature_id, value, sort_order')
+          .in('feature_id', featureIds)
+          .is('deleted_at', null);
+        
+        if (attrError) {
+          console.error('Error al cargar atributos:', attrError);
+        } else {
+          allAttributes = attrs || [];
+          console.log(`Atributos cargados: ${allAttributes.length}`);
+        }
+      } catch (err) {
+        console.error('Excepción al cargar atributos:', err);
+      }
     }
 
     // Obtener todas las variantes de una sola vez
