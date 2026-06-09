@@ -54,13 +54,17 @@ router.get('/', async (req: Request, res: Response) => {
     // Obtener todos los feature_ids para la consulta de attributes
     const featureIds = allFeatures ? allFeatures.map(f => f.id) : [];
 
-    // Obtener todos los atributos de una sola vez
-    const { data: allAttributes } = featureIds.length > 0 ? await supabase
-      .from('attributes')
-      .select('id, feature_id, value, sort_order')
-      .in('feature_id', featureIds)
-      .is('deleted_at', null)
-      .order('sort_order', { ascending: true }) : { data: [] };
+    // Obtener todos los atributos de una sola vez (CORREGIDO)
+    let allAttributes: any[] = [];
+    if (featureIds.length > 0) {
+      const { data: attrs } = await supabase
+        .from('attributes')
+        .select('id, feature_id, value, sort_order')
+        .in('feature_id', featureIds)
+        .is('deleted_at', null)
+        .order('sort_order', { ascending: true });
+      allAttributes = attrs || [];
+    }
 
     // Obtener todas las variantes de una sola vez
     const { data: allVariants } = await supabase
@@ -69,7 +73,7 @@ router.get('/', async (req: Request, res: Response) => {
       .in('product_id', productIds)
       .is('deleted_at', null);
 
-    // Obtener todas las imágenes primarias de una sola vez
+    // Obtener todas las imágenes primarias de una sola vez (CORREGIDO)
     const { data: allImages } = await supabase
       .from('product_images')
       .select('product_id, url')
@@ -82,7 +86,7 @@ router.get('/', async (req: Request, res: Response) => {
       const features = (allFeatures || []).filter(f => f.product_id === product.id);
       const featuresWithAttrs = features.map(f => ({
         ...f,
-        attributes: (allAttributes || []).filter(a => a.feature_id === f.id)
+        attributes: allAttributes.filter(a => a.feature_id === f.id)
       }));
 
       const variants = (allVariants || []).filter(v => v.product_id === product.id);
