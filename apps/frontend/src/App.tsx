@@ -14,6 +14,7 @@ import Products from './admin/pages/Products'
 import ProductDetail from './admin/pages/ProductDetail'
 import ProductNew from './admin/pages/ProductNew'
 import ExcelImport from './admin/pages/ExcelImport'
+import ExcelExport from './admin/pages/ExcelExport'
 import Categories from './admin/pages/Categories'
 import QuoteRequests from './admin/pages/QuoteRequests'
 import Settings from './admin/pages/Settings'
@@ -95,6 +96,11 @@ function AppContent() {
         <Route path="/admin/excel/import" element={
           <ProtectedRoute requiredRole="admin">
             <Layout><ExcelImport /></Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/excel/export" element={
+          <ProtectedRoute requiredRole="admin">
+            <Layout><ExcelExport /></Layout>
           </ProtectedRoute>
         } />
         <Route path="/admin/categories" element={
