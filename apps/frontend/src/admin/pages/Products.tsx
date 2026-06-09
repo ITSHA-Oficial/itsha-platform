@@ -5,20 +5,20 @@ import { useNavigate } from 'react-router-dom';
 import AdminSearchBar from '../components/AdminSearchBar';
 
 export default function Products() {
-  const { products: allProducts, pagination, loading, fetchProducts } = useProducts(TENANT_SLUG);
+  const { products: allProducts, loading, fetchProducts } = useProducts(TENANT_SLUG);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
   const hasLoaded = useRef(false);
 
-  // Cargar productos UNA SOLA VEZ al montar la página
+  // Cargar TODOS los productos (hasta 5000) una sola vez al montar la página
   useEffect(() => {
     if (!hasLoaded.current) {
       hasLoaded.current = true;
-      fetchProducts(1, { limit: '100' });
+      fetchProducts(1, { limit: '5000' });
     }
-  }, []);
+  }, [fetchProducts]);
 
-  // Filtrar localmente (misma lógica que el Catálogo Web)
+  // Filtrar localmente sobre toda la lista de productos
   const products = useMemo(() => {
     if (!search.trim()) return allProducts;
     const q = search.toLowerCase().trim();
@@ -50,10 +50,8 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Única barra de búsqueda: predictiva + filtro local en tiempo real */}
-      <AdminSearchBar
-        onSearch={(query) => setSearch(query)}
-      />
+      {/* Barra de búsqueda simplificada */}
+      <AdminSearchBar onSearch={(query) => setSearch(query)} />
 
       {/* Tabla de productos */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -96,21 +94,6 @@ export default function Products() {
           </tbody>
         </table>
       </div>
-
-      {/* Paginación (solo se muestra si no hay búsqueda activa) */}
-      {!search && pagination.total_pages > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
-          {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map(page => (
-            <button
-              key={page}
-              onClick={() => fetchProducts(page, { limit: '100' })}
-              className={`px-3 py-1 rounded-lg text-sm ${page === pagination.page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
