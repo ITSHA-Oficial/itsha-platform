@@ -1,19 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 import FeatureEditor from '../components/FeatureEditor';
 import VariantEditor from '../components/VariantEditor';
 import ImageUploader from '../components/ImageUploader';
+import useProducts from '../hooks/useProducts';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { products: allProducts, loading: productsLoading } = useProducts(TENANT_SLUG);
+
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'features' | 'variants' | 'images'>('info');
-  const loadingRef = useRef(false);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -24,11 +26,22 @@ export default function ProductDetail() {
   const [categoryId, setCategoryId] = useState<string>('');
   const [categories, setCategories] = useState<any[]>([]);
 
+  // Calcular producto anterior y siguiente
+  const { prevProduct, nextProduct, currentIndex, totalProducts } = useMemo(() => {
+    const sorted = [...allProducts].sort((a: any, b: any) => a.name.localeCompare(b.name));
+    const index = sorted.findIndex((p: any) => p.id === id);
+    return {
+      prevProduct: index > 0 ? sorted[index - 1] : null,
+      nextProduct: index < sorted.length - 1 ? sorted[index + 1] : null,
+      currentIndex: index,
+      totalProducts: sorted.length
+    };
+  }, [allProducts, id]);
+
   // Cargar producto
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    loadingRef.current = true;
     fetch(`${API_URL}/api/v1/products/${id}`, { headers: { 'X-Tenant-Slug': TENANT_SLUG } })
       .then(res => res.json())
       .then(data => {
@@ -42,17 +55,15 @@ export default function ProductDetail() {
           setIsActive(data.is_active);
           setCategoryId(data.category_id || '');
           setLoading(false);
-          loadingRef.current = false;
         }
       })
       .catch(err => {
         if (!cancelled) {
           console.error(err);
           setLoading(false);
-          loadingRef.current = false;
         }
       });
-    return () => { cancelled = true; loadingRef.current = false; };
+    return () => { cancelled = true; };
   }, [id]);
 
   // Cargar categorías
@@ -64,7 +75,6 @@ export default function ProductDetail() {
   }, []);
 
   const handleSave = async () => {
-    if (loadingRef.current || saving) return;
     setSaving(true);
     setMessage(null);
     try {
@@ -99,7 +109,7 @@ export default function ProductDetail() {
     { id: 'images', label: 'Imágenes' },
   ];
 
-  if (loading) {
+  if (loading || productsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -113,14 +123,50 @@ export default function ProductDetail() {
 
   return (
     <div>
+      {/* Barra de navegación superior */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/admin/products')} className="text-gray-500 hover:text-gray-700">← Volver</button>
-          <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
-          <span className="text-sm text-gray-400">SKU: {product.sku}</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/admin/products')}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-600"
+            title="Volver a la lista"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
+            <p className="text-xs text-gray-400">SKU: {product.sku} · Producto {currentIndex + 1} de {totalProducts}</p>
+          </div>
+        </div>
+
+        {/* Flechas de navegación */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => prevProduct && navigate(`/admin/products/${prevProduct.id}`)}
+            disabled={!prevProduct}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-600"
+            title={prevProduct ? `Anterior: ${prevProduct.name}` : 'No hay anterior'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={() => nextProduct && navigate(`/admin/products/${nextProduct.id}`)}
+            disabled={!nextProduct}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-600"
+            title={nextProduct ? `Siguiente: ${nextProduct.name}` : 'No hay siguiente'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       </div>
 
+      {/* Pestañas */}
       <div className="flex gap-1 mb-6 border-b">
         {tabs.map(tab => (
           <button
@@ -135,6 +181,7 @@ export default function ProductDetail() {
         ))}
       </div>
 
+      {/* Contenido de pestañas (sin cambios) */}
       {activeTab === 'info' && (
         <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl">
           <div className="space-y-4">
