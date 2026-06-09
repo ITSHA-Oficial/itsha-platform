@@ -125,4 +125,75 @@ router.post('/features/:featureId/attributes', async (req: Request, res: Respons
   }
 });
 
+// DELETE /api/v1/features/:id
+router.delete('/features/:id', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { id } = req.params;
+
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({
+        error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere el header X-Tenant-Slug.' }
+      });
+    }
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', tenantSlug)
+      .eq('active', true)
+      .single();
+
+    if (tenantError || !tenant) {
+      return res.status(404).json({
+        error: { code: 'TENANT_NOT_FOUND', message: 'El tenant no existe o está inactivo.' }
+      });
+    }
+
+    // Verificar que la característica existe y pertenece al tenant
+    const { data: feature, error: featureError } = await supabase
+      .from('features')
+      .select('id')
+      .eq('id', id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null)
+      .single();
+
+    if (featureError || !feature) {
+      return res.status(404).json({
+        error: { code: 'FEATURE_NOT_FOUND', message: 'Característica no encontrada.' }
+      });
+    }
+
+    // Soft delete: marcar la característica y sus atributos como eliminados
+    const { error: deleteError } = await supabase
+      .from('features')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('tenant_id', tenant.id);
+
+    if (deleteError) {
+      return res.status(500).json({
+        error: { code: 'DB_ERROR', message: 'Error al eliminar la característica.' }
+      });
+    }
+
+    // Soft delete de los atributos asociados
+    await supabase
+      .from('attributes')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('feature_id', id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null);
+
+    return res.json({ message: 'Característica eliminada correctamente.' });
+  } catch (err: any) {
+    console.error('Error en DELETE /features/:id:', err);
+    return res.status(500).json({
+      error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' }
+    });
+  }
+});
+
 export default router;
