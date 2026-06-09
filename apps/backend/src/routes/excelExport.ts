@@ -8,7 +8,7 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const supabase = getSupabaseClient();
 
-    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    let tenantSlug = req.headers['x-tenant-slug'] as string || req.query.slug as string;
     if (!tenantSlug) {
       return res.status(400).json({
         error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere el header X-Tenant-Slug.' }

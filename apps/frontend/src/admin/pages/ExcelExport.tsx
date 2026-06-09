@@ -1,8 +1,24 @@
 import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 
 export default function ExcelExport() {
-  const handleDownload = () => {
-    window.open(`${API_URL}/api/v1/excel/export?slug=${TENANT_SLUG}`, '_blank');
+  const handleDownload = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/v1/excel/export`, {
+        headers: { 'X-Tenant-Slug': TENANT_SLUG }
+      });
+      if (!res.ok) throw new Error('Error al descargar');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'catalogo_maestro.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Error al descargar el Excel. Verifica que el backend esté corriendo.');
+    }
   };
 
   return (
