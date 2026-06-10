@@ -106,7 +106,7 @@ export default function SearchBar({ products = [], getProductUrl, onSearch, fetc
       </div>
 
       {showDropdown && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-64 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 z-[100] bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-64 overflow-y-auto">
           {suggestions.map((product) => (
             <button
               key={product.id}

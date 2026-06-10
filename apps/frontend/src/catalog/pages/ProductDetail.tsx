@@ -162,8 +162,8 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
           </div>
         </div>
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden ${
-            showSearch ? 'max-h-28 opacity-100' : 'max-h-0 opacity-0'
+          className={`transition-all duration-300 ease-in-out ${
+            showSearch ? 'max-h-28 opacity-100 overflow-visible' : 'max-h-0 opacity-0 overflow-hidden'
           }`}
         >
           <div className="px-4 py-3 bg-gray-50/95 backdrop-blur-sm border-t border-gray-100">
