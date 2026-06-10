@@ -34,23 +34,16 @@ export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose, 
           ) : (
             items.map((item, index) => (
               <div key={index} className="flex gap-3 bg-gray-50 rounded-xl p-3 relative">
-                {/* Botón de eliminar (absoluto, siempre visible en la esquina superior derecha) */}
-                <button
-                  onClick={() => onRemove(index)}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors p-1 z-10"
-                  title="Eliminar producto"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-                <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                {/* Imagen cuadrada (sin redondeo) */}
+                <div className="w-16 h-16 bg-gray-200 flex-shrink-0 overflow-hidden">
                   {item.image_url ? (
                     <img src={item.image_url} alt={item.product_name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Sin img</div>
                   )}
                 </div>
+            
+                {/* Información del producto */}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm truncate">{item.product_name}</p>
                   {item.variant_signature && (
@@ -68,12 +61,24 @@ export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose, 
                     >+</button>
                   </div>
                 </div>
-                <div className="text-right flex flex-col justify-between">
-                  {/* Solo el precio, el tacho ya está en la esquina superior */}
-                  {item.total_price && (
-                    <p className="text-sm font-bold text-green-600">S/ {(item.total_price || 0).toFixed(2)}</p>
-                  )}
-                </div>
+            
+                {/* Precio en la esquina superior derecha */}
+                {item.total_price && (
+                  <p className="absolute top-3 right-3 text-sm font-bold text-green-600">
+                    S/ {(item.total_price || 0).toFixed(2)}
+                  </p>
+                )}
+            
+                {/* Tacho de basura en la esquina inferior derecha */}
+                <button
+                  onClick={() => onRemove(index)}
+                  className="absolute bottom-3 right-3 text-gray-400 hover:text-red-500 transition-colors p-1"
+                  title="Eliminar producto"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </div>
             ))
           )}
