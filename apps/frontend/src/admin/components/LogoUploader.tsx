@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 
 interface LogoUploaderProps {
@@ -10,6 +10,11 @@ export default function LogoUploader({ currentUrl, onUploaded }: LogoUploaderPro
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentUrl || null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Sincronizar vista previa cuando cambia la URL actual
+  useEffect(() => {
+    setPreview(currentUrl || null);
+  }, [currentUrl]);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
