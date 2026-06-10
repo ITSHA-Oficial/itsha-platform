@@ -11,9 +11,10 @@ interface HomeProps {
   totalItems: number;
   cartOpen: boolean;
   onCartClick: () => void;
+  onQuickAdd: (item: any) => void;
 }
 
-export default function Home({ totalItems, cartOpen, onCartClick }: HomeProps) {
+export default function Home({ totalItems, cartOpen, onCartClick, onQuickAdd }: HomeProps) {
   const { products, categories, tenant, loading, error } = useCatalog();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
@@ -171,6 +172,7 @@ export default function Home({ totalItems, cartOpen, onCartClick }: HomeProps) {
                 pricingMode={product.pricing_mode}
                 displayPriceMode={product.display_price_mode}
                 minPrice={getMinPrice(product)}
+                onQuickAdd={onQuickAdd}
               />
             ))}
           </div>
