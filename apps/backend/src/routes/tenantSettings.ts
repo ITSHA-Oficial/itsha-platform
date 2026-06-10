@@ -16,7 +16,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     const { data: tenant, error } = await supabase
       .from('tenants')
-      .select('name, logo_url, primary_color, whatsapp, show_cart_total, facebook_url, instagram_url, tiktok_url, address')
+      .select('name, logo_url, primary_color, whatsapp, show_cart_total, show_prices, facebook_url, instagram_url, tiktok_url, address')
       .eq('slug', slug)
       .eq('active', true)
       .single();
@@ -33,6 +33,7 @@ router.get('/', async (req: Request, res: Response) => {
       primary_color: tenant.primary_color,
       whatsapp: tenant.whatsapp,
       show_cart_total: tenant.show_cart_total,
+      show_prices: tenant.show_prices,
       facebook_url: tenant.facebook_url,
       instagram_url: tenant.instagram_url,
       tiktok_url: tenant.tiktok_url,

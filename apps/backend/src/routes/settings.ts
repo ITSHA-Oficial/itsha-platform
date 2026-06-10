@@ -19,7 +19,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     const { data: tenant, error } = await supabase
       .from('tenants')
-      .select('name, slug, whatsapp, logo_url, primary_color, active, show_cart_total, facebook_url, instagram_url, tiktok_url, address')
+      .select('name, slug, whatsapp, logo_url, primary_color, active, show_cart_total, show_prices, facebook_url, instagram_url, tiktok_url, address')
       .eq('slug', tenantSlug)
       .eq('active', true)
       .single();
@@ -63,7 +63,7 @@ router.put('/', async (req: Request, res: Response) => {
       });
     }
 
-    const { name, whatsapp, logo_url, primary_color, show_cart_total, facebook_url, instagram_url, tiktok_url, address } = req.body;
+    const { name, whatsapp, logo_url, primary_color, show_cart_total, show_prices, facebook_url, instagram_url, tiktok_url, address } = req.body;
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (whatsapp !== undefined) updateData.whatsapp = whatsapp;
@@ -78,6 +78,9 @@ router.put('/', async (req: Request, res: Response) => {
     }
     if (show_cart_total !== undefined) {
       updateData.show_cart_total = show_cart_total;
+    }
+    if (show_prices !== undefined) {
+      updateData.show_prices = show_prices;
     }
     if (facebook_url !== undefined) updateData.facebook_url = facebook_url || null;
     if (instagram_url !== undefined) updateData.instagram_url = instagram_url || null;
@@ -94,7 +97,7 @@ router.put('/', async (req: Request, res: Response) => {
       .from('tenants')
       .update(updateData)
       .eq('id', tenant.id)
-      .select('name, slug, whatsapp, logo_url, primary_color, active, show_cart_total, facebook_url, instagram_url, tiktok_url, address')
+      .select('name, slug, whatsapp, logo_url, primary_color, active, show_cart_total, show_prices, facebook_url, instagram_url, tiktok_url, address')
       .single();
 
     if (error) throw error;

@@ -8,6 +8,7 @@ export default function Settings() {
   const [primaryColor, setPrimaryColor] = useState('#1a56db');
   const [logoUrl, setLogoUrl] = useState('');
   const [showCartTotal, setShowCartTotal] = useState(true);
+  const [showPrices, setShowPrices] = useState(true);
   const [facebookUrl, setFacebookUrl] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
   const [tiktokUrl, setTiktokUrl] = useState('');
@@ -23,6 +24,7 @@ export default function Settings() {
         setWhatsapp(data.whatsapp || '');
         setPrimaryColor(data.primary_color || '#1a56db');
         setShowCartTotal(data.show_cart_total !== false);
+        setShowPrices(data.show_prices !== false);
         setFacebookUrl(data.facebook_url || '');
         setInstagramUrl(data.instagram_url || '');
         setTiktokUrl(data.tiktok_url || '');
@@ -44,6 +46,7 @@ export default function Settings() {
           whatsapp,
           primary_color: primaryColor,
           show_cart_total: showCartTotal,
+          show_prices: showPrices,
           facebook_url: facebookUrl,
           instagram_url: instagramUrl,
           tiktok_url: tiktokUrl,
@@ -144,6 +147,20 @@ export default function Settings() {
           <div>
             <p className="text-sm font-medium text-gray-700">Mostrar total en el carrito</p>
             <p className="text-sm text-gray-500">Muestra "S/ X.XX" en el panel del carrito.</p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => setShowPrices(!showPrices)}
+            className={`relative w-11 h-6 rounded-full transition-colors ${showPrices ? 'bg-blue-600' : 'bg-gray-200'}`}
+            aria-label="Mostrar precios en el catálogo"
+          >
+            <span className={`absolute left-1 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white shadow transition-transform ${showPrices ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+          <div>
+            <p className="text-sm font-medium text-gray-700">Mostrar precios en el catálogo</p>
+            <p className="text-sm text-gray-500">Muestra los precios en las tarjetas de productos y en el detalle.</p>
           </div>
         </div>
         <div>

@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useCatalog from '../hooks/useCatalog';
 import CartIcon from '../components/CartIcon';
 import ImageGallery from '../components/ImageGallery';
 import SpecConfigurator from '../components/SpecConfigurator';
 import FormulaInputs from '../components/FormulaInputs';
 import SearchBar from '../components/SearchBar';
+import { fetchTenantSettings } from '../utils/api';
 
 interface ProductDetailProps {
   onAddToCart: (item: any) => void;
@@ -22,6 +23,8 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
   const [formulaInputs, setFormulaInputs] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(1);
   const [showSearch, setShowSearch] = useState(false);
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
+  const [showPrices, setShowPrices] = useState(true);
 
   if (loading) {
     return (
@@ -52,6 +55,25 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
     );
   }
 
+  useEffect(() => {
+    fetchTenantSettings()
+      .then(data => setShowPrices(data.show_prices !== false))
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (product) {
+      const variant = product.variants?.find((v: any) => {
+        if (!v.attributes || v.attributes.length === 0) return false;
+        if (Object.keys(selectedOptions).length < (product.features?.length || 0)) return false;
+        return v.attributes.every((a: any) => selectedOptions[a.feature_name] === a.value);
+      });
+      setCalculatedPrice(variant?.price || null);
+    } else {
+      setCalculatedPrice(null);
+    }
+  }, [selectedOptions, product]);
+
   const placeholder = '/assets/placeholder.svg';
   const productImages = product.images?.length
     ? product.images.map((img: any) => ({ url: img.url, alt_text: img.alt_text || product.name }))
@@ -63,6 +85,9 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
       return v.attributes.every((a: any) => selectedOptions[a.feature_name] === a.value);
     });
 
+    const unitPrice = variant?.price || null;
+    const totalPrice = unitPrice ? unitPrice * quantity : null;
+
     const item = {
       product_id: product.id,
       sku: product.sku,
@@ -72,9 +97,9 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
       selected_options: selectedOptions,
       formula_inputs: Object.keys(formulaInputs).length > 0 ? formulaInputs : null,
       quantity,
-      unit_price: variant?.price || null,
-      total_price: variant?.price ? variant.price * quantity : null,
-      image_url: product.primary_image_url
+      unit_price: unitPrice,
+      total_price: totalPrice,
+      image_url: product.primary_image_url,
     };
 
     onAddToCart(item);
@@ -154,6 +179,15 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
                 formulaVars={product.formula_vars || []}
                 onInputsChange={setFormulaInputs}
               />
+            )}
+
+            {showPrices && calculatedPrice !== null && (
+              <div className="text-center mb-4">
+                <p className="text-2xl font-bold text-green-600">S/ {(calculatedPrice * quantity).toFixed(2)}</p>
+                {quantity > 1 && (
+                  <p className="text-sm text-gray-400">S/ {calculatedPrice.toFixed(2)} c/u</p>
+                )}
+              </div>
             )}
 
             <div className="mt-6 flex items-center gap-4">
