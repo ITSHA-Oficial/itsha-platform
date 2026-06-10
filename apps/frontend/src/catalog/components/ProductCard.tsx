@@ -81,7 +81,7 @@ export default function ProductCard({
             className={`absolute bottom-2 right-2 w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition-all duration-300 ${
               added
                 ? 'bg-green-500 text-white scale-110'
-                : 'bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-md opacity-0 group-hover:opacity-100 active:opacity-100'
+                : 'bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-md'
             }`}
             title="Agregar al carrito"
           >

@@ -79,14 +79,15 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
         setSelectedAttrs({});
         setPrice('');
         setMinQty('1');
+        processingRef.current = false; // Liberar antes de recargar
         await fetchData();
       } else {
         const err = await res.json();
         alert(err?.error?.message || 'Error al crear la variante.');
+        processingRef.current = false;
       }
     } catch (err) {
       console.error(err);
-    } finally {
       processingRef.current = false;
     }
   };
@@ -99,10 +100,10 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
         method: 'DELETE',
         headers: { 'X-Tenant-Slug': TENANT_SLUG }
       });
+      processingRef.current = false; // Liberar antes de recargar
       await fetchData();
     } catch (err) {
       console.error(err);
-    } finally {
       processingRef.current = false;
     }
   };
