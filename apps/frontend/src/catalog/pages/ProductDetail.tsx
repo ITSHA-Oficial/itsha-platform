@@ -26,6 +26,31 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [showPrices, setShowPrices] = useState(true);
 
+  // 1. Hooks incondicionales al inicio
+  useEffect(() => {
+    fetchTenantSettings()
+      .then(data => setShowPrices(data.show_prices !== false))
+      .catch(console.error);
+  }, []);
+
+  // 2. Buscar producto (se ejecuta en cada render, sin hooks adicionales)
+  const product = products.find((p: any) => p.sku === sku);
+
+  // 3. Efecto para calcular precio cuando cambian opciones o producto
+  useEffect(() => {
+    if (!product) {
+      setCalculatedPrice(null);
+      return;
+    }
+    const variant = product.variants?.find((v: any) => {
+      if (!v.attributes || v.attributes.length === 0) return false;
+      if (Object.keys(selectedOptions).length < (product.features?.length || 0)) return false;
+      return v.attributes.every((a: any) => selectedOptions[a.feature_name] === a.value);
+    });
+    setCalculatedPrice(variant?.price || null);
+  }, [selectedOptions, product]);
+
+  // 4. Renderizado condicional (sin hooks debajo)
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -42,8 +67,6 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
     );
   }
 
-  const product = products.find((p: any) => p.sku === sku);
-
   if (!product) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -54,25 +77,6 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
       </div>
     );
   }
-
-  useEffect(() => {
-    fetchTenantSettings()
-      .then(data => setShowPrices(data.show_prices !== false))
-      .catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    if (product) {
-      const variant = product.variants?.find((v: any) => {
-        if (!v.attributes || v.attributes.length === 0) return false;
-        if (Object.keys(selectedOptions).length < (product.features?.length || 0)) return false;
-        return v.attributes.every((a: any) => selectedOptions[a.feature_name] === a.value);
-      });
-      setCalculatedPrice(variant?.price || null);
-    } else {
-      setCalculatedPrice(null);
-    }
-  }, [selectedOptions, product]);
 
   const placeholder = '/assets/placeholder.svg';
   const productImages = product.images?.length
@@ -108,7 +112,6 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header con logo y lupa */}
       <header className="bg-white shadow-sm sticky top-0 z-30">
         <div className="max-w-4xl mx-auto px-3 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
