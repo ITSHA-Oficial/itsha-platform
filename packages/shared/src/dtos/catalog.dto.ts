@@ -46,5 +46,6 @@ export interface CatalogVariantDTO {
   variant_signature: string;
   price: number;
   min_quantity: number | null;
+  is_main: boolean;
   attributes: { feature_name: string; value: string }[];
 }

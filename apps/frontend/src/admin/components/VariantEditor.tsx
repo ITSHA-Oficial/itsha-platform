@@ -21,6 +21,7 @@ interface Variant {
   price: number;
   min_quantity: number;
   is_active: boolean;
+  is_main: boolean;
   attributes: { feature_name: string; value: string }[];
 }
 
@@ -126,15 +127,38 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
               <div key={variant.id} className="flex items-center justify-between bg-gray-50 rounded-xl p-3">
                 <div>
                   <p className="text-sm font-medium text-gray-800">
-                    {variant.attributes.map(a => `${a.feature_name}: ${a.value}`).join(' | ')}
+                    {variant.is_main && '⭐ '}{variant.attributes.map(a => `${a.feature_name}: ${a.value}`).join(' | ')}
                   </p>
                   <p className="text-xs text-gray-500">
                     Precio: S/ {variant.price.toFixed(2)} | Mín: {variant.min_quantity} u.
                   </p>
                 </div>
-                <button onClick={() => handleDeleteVariant(variant.id)} className="text-red-500 text-sm hover:underline">
-                  Eliminar
-                </button>
+                <div className="flex items-center">
+                  <button onClick={() => handleDeleteVariant(variant.id)} className="text-red-500 text-sm hover:underline">
+                    Eliminar
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (processingRef.current) return;
+                      processingRef.current = true;
+                      try {
+                        await fetch(`${API_URL}/api/v1/variants/${variant.id}/main`, {
+                          method: 'PUT',
+                          headers: { 'X-Tenant-Slug': TENANT_SLUG }
+                        });
+                        processingRef.current = false;
+                        await fetchData();
+                      } catch (err) {
+                        console.error(err);
+                        processingRef.current = false;
+                      }
+                    }}
+                    className="text-yellow-500 text-sm hover:underline ml-2"
+                    title="Establecer como variante principal"
+                  >
+                    ⭐ Principal
+                  </button>
+                </div>
               </div>
             ))}
           </div>

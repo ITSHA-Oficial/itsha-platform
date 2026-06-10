@@ -12,7 +12,7 @@ interface CartPanelProps {
 export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose, showTotal }: CartPanelProps) {
   const navigate = useNavigate();
 
-  const total = items.reduce((sum, item) => sum + (item.total_price || 0) * item.quantity, 0);
+  const total = items.reduce((sum, item) => sum + (item.total_price || 0), 0);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -69,7 +69,7 @@ export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose, 
                     </svg>
                   </button>
                   {item.total_price && (
-                    <p className="text-sm font-bold text-green-600">S/ {(item.total_price * item.quantity).toFixed(2)}</p>
+                    <p className="text-sm font-bold text-green-600">S/ {(item.total_price || 0).toFixed(2)}</p>
                   )}
                 </div>
               </div>

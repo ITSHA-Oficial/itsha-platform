@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 interface Feature {
   name: string;
   sort_order: number;
@@ -19,6 +21,20 @@ interface SpecConfiguratorProps {
 }
 
 export default function SpecConfigurator({ features, variants, selectedOptions, onOptionsChange }: SpecConfiguratorProps) {
+  useEffect(() => {
+    if (Object.keys(selectedOptions).length > 0 || !variants || variants.length === 0) return;
+
+    const mainVariant = variants.find(v => (v as any).is_main) || variants.reduce((min, v) => v.price < min.price ? v : min);
+
+    if (mainVariant && mainVariant.attributes) {
+      const options: Record<string, string> = {};
+      mainVariant.attributes.forEach(attr => {
+        options[attr.feature_name] = attr.value;
+      });
+      onOptionsChange(options);
+    }
+  }, [variants]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!features || features.length === 0) {
     return <p className="text-gray-400 text-sm">Este producto no tiene opciones configurables.</p>;
   }

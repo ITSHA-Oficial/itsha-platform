@@ -157,4 +157,76 @@ router.post('/products/:productId/variants', async (req: Request, res: Response)
   }
 });
 
+/**
+ * PUT /api/v1/variants/:id/main
+ * Establece una variante como principal. Desmarca todas las demás del mismo producto.
+ */
+router.put('/variants/:id/main', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { id } = req.params;
+
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({
+        error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere el header X-Tenant-Slug.' }
+      });
+    }
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', tenantSlug)
+      .eq('active', true)
+      .single();
+
+    if (tenantError || !tenant) {
+      return res.status(404).json({
+        error: { code: 'TENANT_NOT_FOUND', message: 'El tenant no existe o está inactivo.' }
+      });
+    }
+
+    const { data: variant, error: variantError } = await supabase
+      .from('variants')
+      .select('id, product_id')
+      .eq('id', id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null)
+      .single();
+
+    if (variantError || !variant) {
+      return res.status(404).json({
+        error: { code: 'VARIANT_NOT_FOUND', message: 'Variante no encontrada.' }
+      });
+    }
+
+    // Desmarcar todas las variantes del producto
+    await supabase
+      .from('variants')
+      .update({ is_main: false })
+      .eq('product_id', variant.product_id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null);
+
+    // Marcar la seleccionada como principal
+    const { error: updateError } = await supabase
+      .from('variants')
+      .update({ is_main: true })
+      .eq('id', id)
+      .eq('tenant_id', tenant.id);
+
+    if (updateError) throw updateError;
+
+    return res.json({
+      message: 'Variante establecida como principal.',
+      variant_id: id
+    });
+  } catch (err: any) {
+    console.error('Error en PUT /variants/:id/main:', err);
+    return res.status(500).json({
+      error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' }
+    });
+  }
+});
+
 export default router;

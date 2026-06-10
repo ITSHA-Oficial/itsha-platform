@@ -69,7 +69,7 @@ router.get('/', async (req: Request, res: Response) => {
 
       const { data: variants } = await supabase
         .from('variants')
-        .select('id, sku_variant, variant_signature, price, min_quantity, is_active')
+        .select('id, sku_variant, variant_signature, price, min_quantity, is_active, is_main')
         .eq('product_id', product.id)
         .is('deleted_at', null);
 
