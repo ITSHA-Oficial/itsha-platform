@@ -19,7 +19,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     const { data: tenant, error } = await supabase
       .from('tenants')
-      .select('name, slug, whatsapp, logo_url, primary_color, active')
+      .select('name, slug, whatsapp, logo_url, primary_color, active, show_cart_total, facebook_url, instagram_url, tiktok_url, address')
       .eq('slug', tenantSlug)
       .eq('active', true)
       .single();
