@@ -33,6 +33,24 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
       .catch(console.error);
   }, []);
 
+  // Pre-seleccionar variante al cargar el producto
+  useEffect(() => {
+    const product = products.find((p: any) => p.sku === sku);
+    if (!product || !product.variants || product.variants.length === 0) return;
+    if (Object.keys(selectedOptions).length > 0) return; // ya tiene selección
+
+    const mainVariant = product.variants.find((v: any) => v.is_main) 
+      || product.variants.reduce((min: any, v: any) => v.price < min.price ? v : min);
+
+    if (mainVariant && mainVariant.attributes) {
+      const options: Record<string, string> = {};
+      mainVariant.attributes.forEach((attr: any) => {
+        options[attr.feature_name] = attr.value;
+      });
+      setSelectedOptions(options);
+    }
+  }, [products, sku]); // se ejecuta cuando cambia el producto o se carga el catálogo
+
   // 2. Buscar producto (se ejecuta en cada render, sin hooks adicionales)
   const product = products.find((p: any) => p.sku === sku);
 
