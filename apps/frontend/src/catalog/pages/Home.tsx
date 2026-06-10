@@ -128,7 +128,7 @@ export default function Home({ totalItems, cartOpen, onCartClick, onQuickAdd }: 
               />
             )}
             
-            <h1 className="text-lg font-bold text-gray-900 truncate">
+            <h1 className="text-lg font-bold text-gray-900 truncate tracking-tight">
               {tenant?.name || 'Catálogo'}
             </h1>
           </div>
@@ -195,7 +195,7 @@ export default function Home({ totalItems, cartOpen, onCartClick, onQuickAdd }: 
             <p className="text-gray-400 text-lg">No se encontraron productos.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {filteredProducts.map((product: any) => (
               <ProductCard
                 key={product.id}

@@ -65,14 +65,14 @@ export default function ProductCard({
   return (
     <Link
       to={`/producto/${sku}`}
-      className="group bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col"
+      className="group bg-white overflow-hidden flex flex-col"
     >
-      {/* Imagen (sin botón superpuesto) */}
+      {/* Imagen sin bordes */}
       <div className="aspect-square overflow-hidden bg-gray-100">
         <img
           src={imageUrl || placeholder}
           alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover"
           loading="lazy"
         />
       </div>
@@ -89,7 +89,7 @@ export default function ProductCard({
           {onQuickAdd && (
             <button
               onClick={handleQuickAdd}
-              className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
+              className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
                 added
                   ? 'bg-green-500 text-white scale-110'
                   : 'bg-gray-100 text-gray-600 hover:bg-primary hover:text-white active:scale-95'
@@ -97,12 +97,10 @@ export default function ProductCard({
               title="Agregar al carrito"
             >
               {added ? (
-                /* Check de confirmación */
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
-                /* Ícono de bolsita (mismo que CartIcon) */
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                   <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />

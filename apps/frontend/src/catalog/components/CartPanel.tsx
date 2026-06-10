@@ -52,7 +52,7 @@ export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose, 
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{item.product_name}</p>
+                  <p className="font-semibold text-sm truncate">{item.product_name}</p>
                   {item.variant_signature && (
                     <p className="text-xs text-gray-500 truncate">{item.variant_signature}</p>
                   )}
@@ -89,7 +89,7 @@ export default function CartPanel({ items, onRemove, onUpdateQuantity, onClose, 
             )}
             <button
               onClick={() => { onClose(); navigate('/cotizar'); }}
-              className="w-full bg-primary text-white py-3 rounded-xl font-semibold transition-colors"
+              className="w-full bg-primary text-white py-3 rounded-xl font-semibold transition-colors shadow-lg"
             >
               Solicitar cotización
             </button>

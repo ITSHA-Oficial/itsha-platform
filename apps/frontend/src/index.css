@@ -1,27 +1,59 @@
 @import "tailwindcss";
 
-/* Utilidades dinámicas con el color primario */
-.bg-primary {
-  background-color: var(--primary-color, #1a56db);
-}
-.bg-primary:hover {
-  filter: brightness(0.9);
-}
-.bg-primary:disabled {
-  opacity: 0.5;
+/* =============================================
+   TIPOGRAFÍA Y ESTILOS GLOBALES
+   ============================================= */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-white text-gray-900;
+  }
+
+  /* Mejor legibilidad para textos largos */
+  p {
+    @apply leading-relaxed;
+  }
 }
 
-.text-primary {
-  color: var(--primary-color, #1a56db);
-}
-.text-primary:hover {
-  opacity: 0.8;
-}
+/* =============================================
+   UTILIDADES CON COLOR PRIMARIO
+   ============================================= */
+@layer utilities {
+  .bg-primary {
+    background-color: var(--primary-color, #1a56db);
+  }
+  .bg-primary:hover {
+    filter: brightness(0.9);
+  }
+  .bg-primary:disabled {
+    opacity: 0.5;
+  }
 
-.border-primary {
-  border-color: var(--primary-color, #1a56db);
-}
+  .text-primary {
+    color: var(--primary-color, #1a56db);
+  }
+  .text-primary:hover {
+    opacity: 0.8;
+  }
 
-.ring-primary:focus {
-  --tw-ring-color: var(--primary-color, #1a56db);
+  .border-primary {
+    border-color: var(--primary-color, #1a56db);
+  }
+
+  .ring-primary:focus {
+    --tw-ring-color: var(--primary-color, #1a56db);
+  }
+
+  /* Sombras suaves para tarjetas modernas */
+  .shadow-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  .shadow-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
 }

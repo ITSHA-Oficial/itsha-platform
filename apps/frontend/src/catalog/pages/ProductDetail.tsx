@@ -185,7 +185,7 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
           <div className="p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h2>
             {product.description && (
-              <p className="text-gray-500 mb-6">{product.description}</p>
+              <p className="text-gray-600 leading-relaxed mb-6">{product.description}</p>
             )}
 
             {product.pricing_mode === 'explicit_variant' ? (
@@ -204,7 +204,7 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
 
             {showPrices && calculatedPrice !== null && (
               <div className="text-center mb-4">
-                <p className="text-2xl font-bold text-green-600">S/ {(calculatedPrice * quantity).toFixed(2)}</p>
+                <p className="text-2xl font-extrabold text-green-600">S/ {(calculatedPrice * quantity).toFixed(2)}</p>
                 {quantity > 1 && (
                   <p className="text-sm text-gray-400">S/ {calculatedPrice.toFixed(2)} c/u</p>
                 )}
