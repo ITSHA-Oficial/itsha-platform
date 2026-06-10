@@ -67,11 +67,69 @@ router.get('/', async (req: Request, res: Response) => {
         }));
       }
 
+      // Obtener las variantes
       const { data: variants } = await supabase
         .from('variants')
         .select('id, sku_variant, variant_signature, price, min_quantity, is_active, is_main')
         .eq('product_id', product.id)
         .is('deleted_at', null);
+
+      // Obtener los atributos de todas las variantes del producto
+      if (variants && variants.length > 0) {
+        const variantIds = variants.map(v => v.id);
+
+        // 1. Obtener todas las relaciones variant_attributes
+        const { data: variantAttrs } = await supabase
+          .from('variant_attributes')
+          .select('variant_id, attribute_id')
+          .in('variant_id', variantIds)
+          .is('deleted_at', null);
+  
+        if (variantAttrs && variantAttrs.length > 0) {
+          const attributeIds = [...new Set(variantAttrs.map(va => va.attribute_id))];
+
+          // 2. Obtener los atributos (value + feature_id)
+          const { data: attributes } = await supabase
+            .from('attributes')
+            .select('id, value, feature_id')
+            .in('id', attributeIds)
+            .is('deleted_at', null);
+
+          if (attributes && attributes.length > 0) {
+            const featureIds = [...new Set(attributes.map(a => a.feature_id))];
+
+            // 3. Obtener los nombres de las features
+            const { data: features } = await supabase
+              .from('features')
+              .select('id, name')
+              .in('id', featureIds)
+              .is('deleted_at', null);
+
+            // Crear mapas para acceder rápidamente
+            const attrMap = new Map(attributes.map(a => [a.id, a]));
+            const featMap = new Map(features?.map(f => [f.id, f]) || []);
+
+            // 4. Agrupar atributos por variant_id
+            const attrsByVariant: Record<string, any[]> = {};
+            for (const va of variantAttrs) {
+              const attr = attrMap.get(va.attribute_id);
+              if (!attr) continue;
+              const featName = featMap.get(attr.feature_id)?.name || '';
+
+              if (!attrsByVariant[va.variant_id]) attrsByVariant[va.variant_id] = [];
+              attrsByVariant[va.variant_id].push({
+                feature_name: featName,
+                value: attr.value
+              });
+            }
+
+            // 5. Asignar a cada variante
+            variants.forEach(v => {
+              (v as any).attributes = attrsByVariant[v.id] || [];
+            });
+          }
+        }
+      }
 
       const { data: primaryImage } = await supabase
         .from('product_images')
