@@ -84,7 +84,7 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header con logo y lupa */}
-      <header className="bg-white shadow-sm sticky top-0 z-20">
+      <header className="bg-white shadow-sm sticky top-0 z-30">
         <div className="max-w-4xl mx-auto px-3 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <button
