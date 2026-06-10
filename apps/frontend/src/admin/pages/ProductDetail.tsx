@@ -53,14 +53,12 @@ export default function ProductDetail() {
   }, []);
 
   // Calcular producto anterior y siguiente
-  const { prevProduct, nextProduct, currentIndex, totalProducts } = useMemo(() => {
+  const { prevProduct, nextProduct } = useMemo(() => {
     const sorted = [...allProducts].sort((a: any, b: any) => a.name.localeCompare(b.name));
     const index = sorted.findIndex((p: any) => p.id === id);
     return {
       prevProduct: index > 0 ? sorted[index - 1] : null,
-      nextProduct: index < sorted.length - 1 ? sorted[index + 1] : null,
-      currentIndex: index,
-      totalProducts: sorted.length
+      nextProduct: index < sorted.length - 1 ? sorted[index + 1] : null
     };
   }, [allProducts, id]);
 
@@ -149,47 +147,33 @@ export default function ProductDetail() {
 
   return (
     <div>
-      {/* Barra de navegación superior */}
+      {/* Encabezado limpio solo con navegación */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/admin/products')}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-600"
-            title="Volver a la lista"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
-            <p className="text-xs text-gray-400">SKU: {product.sku} · Producto {currentIndex + 1} de {totalProducts}</p>
-          </div>
-        </div>
+        {/* Flecha izquierda: producto anterior */}
+        <button
+          onClick={() => prevProduct && navigate(`/admin/products/${prevProduct.id}`)}
+          disabled={!prevProduct}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-600"
+          title={prevProduct ? `Anterior: ${prevProduct.name}` : 'No hay anterior'}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
 
-        {/* Flechas de navegación */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => prevProduct && navigate(`/admin/products/${prevProduct.id}`)}
-            disabled={!prevProduct}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-600"
-            title={prevProduct ? `Anterior: ${prevProduct.name}` : 'No hay anterior'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={() => nextProduct && navigate(`/admin/products/${nextProduct.id}`)}
-            disabled={!nextProduct}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-600"
-            title={nextProduct ? `Siguiente: ${nextProduct.name}` : 'No hay siguiente'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
+
+        {/* Flecha derecha: producto siguiente */}
+        <button
+          onClick={() => nextProduct && navigate(`/admin/products/${nextProduct.id}`)}
+          disabled={!nextProduct}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-600"
+          title={nextProduct ? `Siguiente: ${nextProduct.name}` : 'No hay siguiente'}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
 
       {/* Pestañas */}
