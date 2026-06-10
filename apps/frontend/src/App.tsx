@@ -7,6 +7,7 @@ import Quote from './catalog/pages/Quote'
 import Thanks from './catalog/pages/Thanks'
 import CartIcon from './catalog/components/CartIcon'
 import CartPanel from './catalog/components/CartPanel'
+import WhatsAppButton from './catalog/components/WhatsAppButton';
 import useCart from './catalog/hooks/useCart'
 import Login from './admin/pages/Login'
 import Dashboard from './admin/pages/Dashboard'
@@ -63,6 +64,8 @@ function AppContent() {
             showTotal={showCartTotal}
           />
         )}
+
+      {!location.pathname.startsWith('/admin') && <WhatsAppButton />}
 
       <Routes>
         {/* Rutas del Catálogo Web (públicas) */}
