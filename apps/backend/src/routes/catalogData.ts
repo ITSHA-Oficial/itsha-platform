@@ -33,7 +33,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     const { data: products } = await supabase
       .from('products')
-      .select('id, sku, name, description, category_id, pricing_mode, display_price_mode, formula_vars, is_active')
+      .select('id, sku, name, description, category_id, pricing_mode, display_price_mode, formula_vars, is_active, is_featured')
       .eq('tenant_id', tenant.id)
       .eq('is_active', true)
       .is('deleted_at', null)

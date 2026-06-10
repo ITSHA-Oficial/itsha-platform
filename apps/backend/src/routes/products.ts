@@ -99,7 +99,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     let query = supabase
       .from('products')
-      .select('id, sku, name, description, category_id, pricing_mode, display_price_mode, is_active, created_at', { count: 'exact' })
+      .select('id, sku, name, description, category_id, pricing_mode, display_price_mode, is_active, is_featured, created_at', { count: 'exact' })
       .eq('tenant_id', tenant.id)
       .is('deleted_at', null);
 

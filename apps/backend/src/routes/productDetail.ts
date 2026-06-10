@@ -182,6 +182,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (pricing_mode !== undefined) updateData.pricing_mode = pricing_mode;
     if (display_price_mode !== undefined) updateData.display_price_mode = display_price_mode;
     if (is_active !== undefined) updateData.is_active = is_active;
+    if (req.body.is_featured !== undefined) updateData.is_featured = req.body.is_featured;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
@@ -195,7 +196,7 @@ router.put('/:id', async (req: Request, res: Response) => {
       .eq('id', id)
       .eq('tenant_id', tenant.id)
       .is('deleted_at', null)
-      .select('id, sku, name, description, category_id, pricing_mode, display_price_mode, is_active, updated_at')
+      .select('id, sku, name, description, category_id, pricing_mode, display_price_mode, is_active, is_featured, updated_at')
       .single();
 
     if (error || !product) {

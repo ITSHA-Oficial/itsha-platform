@@ -5,6 +5,7 @@ import ProductCard from '../components/ProductCard';
 import CategoryMenu from '../components/CategoryMenu';
 import SearchBar from '../components/SearchBar';
 import CartIcon from '../components/CartIcon';
+import FeaturedCarousel from '../components/FeaturedCarousel';
 import { fetchTenantSettings } from '../utils/api';
 
 interface HomeProps {
@@ -70,6 +71,13 @@ export default function Home({ totalItems, cartOpen, onCartClick, onQuickAdd }: 
     // Si no hay, devolver la más barata (comportamiento actual)
     return Math.min(...product.variants.map((v: any) => v.price));
   };
+
+  // Productos para el carrusel: los marcados como destacados, o los primeros 5
+  const carouselProducts = useMemo(() => {
+    const featured = products.filter((p: any) => p.is_featured);
+    if (featured.length > 0) return featured;
+    return products.slice(0, 5);
+  }, [products]);
 
   if (loading) {
     return (
@@ -164,6 +172,22 @@ export default function Home({ totalItems, cartOpen, onCartClick, onQuickAdd }: 
           </div>
         </div>
       </header>
+
+      {carouselProducts.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 pt-4">
+          <FeaturedCarousel
+            products={carouselProducts.map((p: any) => ({
+              id: p.id,
+              sku: p.sku,
+              name: p.name,
+              primary_image_url: p.primary_image_url,
+              display_price_mode: p.display_price_mode,
+              minPrice: p.variants?.length ? getMinPrice(p) : undefined,
+              is_featured: p.is_featured
+            }))}
+          />
+        </div>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 py-4">
         {filteredProducts.length === 0 ? (

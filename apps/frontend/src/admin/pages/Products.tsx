@@ -38,6 +38,8 @@ export default function Products() {
     );
   }, [allProducts, search]);
 
+  const featuredCount = useMemo(() => allProducts.filter((p: any) => p.is_featured).length, [allProducts]);
+
   const handleDelete = async (productId: string) => {
     if (!confirm('¿Eliminar este producto? Se ocultará del catálogo público.')) return;
     setDeletingId(productId);
@@ -81,6 +83,12 @@ export default function Products() {
 
       <AdminSearchBar onSearch={(query) => setSearch(query)} />
 
+      {featuredCount < 5 && (
+        <p className="text-amber-600 text-sm my-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          ⚠️ Solo hay {featuredCount} producto(s) destacado(s). El carrusel necesita al menos 5 para verse óptimo.
+        </p>
+      )}
+
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
@@ -90,13 +98,14 @@ export default function Products() {
               <th className="px-6 py-3">Pricing</th>
               <th className="px-6 py-3">Precio</th>
               <th className="px-6 py-3">Activo</th>
+              <th className="px-4 py-3 text-center">Destacado</th>
               <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {products.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
                   No se encontraron productos.
                 </td>
               </tr>
@@ -115,6 +124,32 @@ export default function Products() {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {product.is_active ? 'Activo' : 'Inactivo'}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await fetch(`${API_URL}/api/v1/products/${product.id}`, {
+                            method: 'PUT',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'X-Tenant-Slug': TENANT_SLUG
+                            },
+                            body: JSON.stringify({ is_featured: !product.is_featured })
+                          });
+                          // Refrescar la lista
+                          fetchProducts(1, { limit: '500' });
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }}
+                      className={`text-2xl transition-transform hover:scale-110 ${
+                        product.is_featured ? 'text-yellow-500' : 'text-gray-300'
+                      }`}
+                      title={product.is_featured ? 'Quitar del carrusel' : 'Agregar al carrusel'}
+                    >
+                      ★
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                     <button

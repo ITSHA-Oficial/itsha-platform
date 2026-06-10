@@ -11,6 +11,7 @@ interface Product {
   display_price_mode: string;
   is_active: boolean;
   created_at: string;
+  is_featured?: boolean;
 }
 
 interface Pagination {
