@@ -64,6 +64,10 @@ export default function Home({ totalItems, cartOpen, onCartClick, onQuickAdd }: 
 
   const getMinPrice = (product: any) => {
     if (!product.variants || product.variants.length === 0) return undefined;
+    // Buscar la variante marcada como principal
+    const mainVariant = product.variants.find((v: any) => v.is_main);
+    if (mainVariant) return mainVariant.price;
+    // Si no hay, devolver la más barata (comportamiento actual)
     return Math.min(...product.variants.map((v: any) => v.price));
   };
 

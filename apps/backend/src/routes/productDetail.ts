@@ -77,7 +77,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (product.pricing_mode === 'explicit_variant') {
       const { data: variantsData } = await supabase
         .from('variants')
-        .select('id, sku_variant, variant_signature, price, min_quantity, is_active')
+        .select('id, sku_variant, variant_signature, price, min_quantity, is_active, is_main')
         .eq('product_id', id)
         .eq('tenant_id', tenant.id)
         .is('deleted_at', null)

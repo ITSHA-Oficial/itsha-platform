@@ -123,40 +123,55 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
         <div className="space-y-2">
           <h4 className="font-semibold text-gray-800">Variantes activas</h4>
           <div className="space-y-2">
-            {variants.map(variant => (
-              <div key={variant.id} className="flex items-center justify-between bg-gray-50 rounded-xl p-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-800">
-                    {variant.is_main && '⭐ '}{variant.attributes.map(a => `${a.feature_name}: ${a.value}`).join(' | ')}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Precio: S/ {variant.price.toFixed(2)} | Mín: {variant.min_quantity} u.
-                  </p>
+            {variants.map((variant) => (
+              <div
+                key={variant.id}
+                className={`flex items-center justify-between rounded-xl p-3 ${
+                  variant.is_main
+                    ? 'bg-yellow-50 border border-yellow-300 shadow-sm'
+                    : 'bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Estrella de principal (solo visible si ya es la principal) */}
+                  {variant.is_main && (
+                    <span className="text-yellow-500 text-lg" title="Variante principal">
+                      ⭐
+                    </span>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">
+                      {variant.attributes.map((a) => `${a.feature_name}: ${a.value}`).join(' | ')}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Precio: S/ {variant.price.toFixed(2)} | Mín: {variant.min_quantity} u.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center gap-2">
                   <button onClick={() => handleDeleteVariant(variant.id)} className="text-red-500 text-sm hover:underline">
                     Eliminar
                   </button>
                   <button
                     onClick={async () => {
-                      if (processingRef.current) return;
-                      processingRef.current = true;
+                      if (processingRef.current) return
+                      processingRef.current = true
                       try {
                         await fetch(`${API_URL}/api/v1/variants/${variant.id}/main`, {
                           method: 'PUT',
-                          headers: { 'X-Tenant-Slug': TENANT_SLUG }
-                        });
-                        processingRef.current = false;
-                        await fetchData();
+                          headers: { 'X-Tenant-Slug': TENANT_SLUG },
+                        })
+                        processingRef.current = false
+                        await fetchData()
                       } catch (err) {
-                        console.error(err);
-                        processingRef.current = false;
+                        console.error(err)
+                        processingRef.current = false
                       }
                     }}
-                    className="text-yellow-500 text-sm hover:underline ml-2"
-                    title="Establecer como variante principal"
+                    className={`text-sm underline ml-1 ${variant.is_main ? 'text-yellow-600 font-semibold' : 'text-yellow-500 hover:text-yellow-600'}`}
+                    title={variant.is_main ? 'Ya es la principal' : 'Establecer como variante principal'}
                   >
-                    ⭐ Principal
+                    {variant.is_main ? '★ Principal' : '☆ Establecer'}
                   </button>
                 </div>
               </div>
