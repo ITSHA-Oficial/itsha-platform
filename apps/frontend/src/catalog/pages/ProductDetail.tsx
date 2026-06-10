@@ -84,11 +84,17 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header con logo y lupa */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+      <header className="bg-white shadow-sm sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-3 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700 shrink-0">
-              ← Volver
+            <button
+              onClick={() => navigate(-1)}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white hover:shadow-sm transition-all text-gray-500 hover:text-gray-700"
+              title="Volver"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
             {tenant?.logo_url && (
               <img src={tenant.logo_url} alt="Logo" className="h-8 w-8 rounded-full object-cover" />
