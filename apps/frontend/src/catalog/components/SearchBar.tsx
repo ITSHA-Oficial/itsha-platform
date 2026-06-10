@@ -62,7 +62,13 @@ export default function SearchBar({ products = [], getProductUrl, onSearch, fetc
 
   // Cerrar dropdown con Escape o scroll
   useEffect(() => {
-    const handleScroll = () => setShowDropdown(false);
+    const handleScroll = (event: Event) => {
+      // Si el scroll proviene del dropdown, NO cerrarlo
+      if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
+        return;
+      }
+      setShowDropdown(false);
+    };
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setShowDropdown(false);
     };
