@@ -109,16 +109,21 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
             <CartIcon totalItems={totalItems} onClick={onCartClick} />
           </div>
         </div>
-        {showSearch && (
-          <div className="px-3 pb-3 border-t bg-white">
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            showSearch ? 'max-h-28 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="px-4 py-3 bg-gray-50/95 backdrop-blur-sm border-t border-gray-100">
             <SearchBar
               products={products}
-              onSearch={() => {}}
-              getProductUrl={(p: any) => `/producto/${p.sku}`}
-              onSelectProduct={() => setShowSearch(false)}
+              onSelectProduct={(p: any) => {
+                navigate(`/producto/${p.sku}`);
+                setShowSearch(false);
+              }}
             />
           </div>
-        )}
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">

@@ -93,7 +93,7 @@ export default function SearchBar({ products = [], getProductUrl, onSearch, fetc
           value={value}
           onChange={e => setValue(e.target.value)}
           placeholder="Buscar productos..."
-          className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[48px]"
+          className="w-full px-4 py-3.5 bg-white border-0 rounded-xl text-sm shadow-sm ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 focus:shadow-md transition-all min-h-[48px] placeholder-gray-400"
         />
         {value && (
           <button

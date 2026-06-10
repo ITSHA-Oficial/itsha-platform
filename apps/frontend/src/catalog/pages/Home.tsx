@@ -131,20 +131,26 @@ export default function Home({ totalItems, cartOpen, onCartClick }: HomeProps) {
           </div>
         </div>
 
-        {/* Barra de búsqueda desplegable */}
-        {showSearch && (
-          <div className="px-3 pb-3 border-t bg-white">
+        {/* Barra de búsqueda desplegable con animación */}
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            showSearch ? 'max-h-28 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="px-4 py-3 bg-gray-50/95 backdrop-blur-sm border-t border-gray-100">
             <SearchBar
               products={products}
               onSearch={(query) => {
                 setLastQuery(query);
                 applyFilters(selectedCategory, query);
               }}
-              getProductUrl={(product) => `/producto/${product.sku}`}
-              onSelectProduct={() => setShowSearch(false)}
+              onSelectProduct={(product) => {
+                navigate(`/producto/${product.sku}`);
+                setShowSearch(false);
+              }}
             />
           </div>
-        )}
+        </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-4">
