@@ -21,6 +21,7 @@ interface SpecConfiguratorProps {
 }
 
 export default function SpecConfigurator({ features, variants, selectedOptions, onOptionsChange }: SpecConfiguratorProps) {
+  // Pre-selección de variante principal o más barata (debe ir antes de cualquier return)
   useEffect(() => {
     if (Object.keys(selectedOptions).length > 0 || !variants || variants.length === 0) return;
 
