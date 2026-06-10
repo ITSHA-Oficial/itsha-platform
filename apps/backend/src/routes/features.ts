@@ -196,4 +196,37 @@ router.delete('/features/:id', async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /api/v1/attributes/:id
+router.delete('/attributes/:id', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { id } = req.params;
+
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({ error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere X-Tenant-Slug' } });
+    }
+
+    const { data: tenant } = await supabase.from('tenants').select('id').eq('slug', tenantSlug).eq('active', true).single();
+    if (!tenant) {
+      return res.status(404).json({ error: { code: 'TENANT_NOT_FOUND', message: 'Tenant no encontrado' } });
+    }
+
+    const { error: deleteError } = await supabase
+      .from('attributes')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('tenant_id', tenant.id);
+
+    if (deleteError) {
+      return res.status(500).json({ error: { code: 'DB_ERROR', message: 'Error al eliminar el atributo' } });
+    }
+
+    return res.json({ message: 'Atributo eliminado correctamente.' });
+  } catch (err: any) {
+    console.error('Error en DELETE /attributes/:id:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno' } });
+  }
+});
+
 export default router;

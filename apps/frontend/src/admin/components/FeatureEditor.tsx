@@ -99,6 +99,19 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
     }
   };
 
+  const handleDeleteAttribute = async (attributeId: string) => {
+    if (!confirm('¿Eliminar este atributo?')) return;
+    try {
+      await fetch(`${API_URL}/api/v1/attributes/${attributeId}`, {
+        method: 'DELETE',
+        headers: { 'X-Tenant-Slug': TENANT_SLUG }
+      });
+      fetchFeatures();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-32">
@@ -137,8 +150,18 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
 
             <div className="flex flex-wrap gap-2 mb-3">
               {feature.attributes.map(attr => (
-                <span key={attr.id} className="px-3 py-1 bg-white border border-gray-200 rounded-full text-sm text-gray-600">
+                <span key={attr.id} className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-gray-200 rounded-full text-sm text-gray-600 group">
                   {attr.value}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteAttribute(attr.id);
+                    }}
+                    className="text-gray-400 hover:text-red-500 transition-colors text-lg leading-none ml-1"
+                    title="Eliminar atributo"
+                  >
+                    ×
+                  </button>
                 </span>
               ))}
             </div>
