@@ -9,7 +9,12 @@ import useProducts from '../hooks/useProducts';
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { products: allProducts, loading: productsLoading } = useProducts(TENANT_SLUG);
+  const { products: allProducts, loading: productsLoading, fetchProducts } = useProducts(TENANT_SLUG);
+
+  // Cargar la lista completa de productos para la navegación
+  useEffect(() => {
+    fetchProducts(1, { limit: '500' });
+  }, [fetchProducts]);
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
