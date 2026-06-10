@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { fetchTenantSettings } from '../utils/api';
 
 export default function Thanks() {
   const location = useLocation();
@@ -7,15 +8,15 @@ export default function Thanks() {
   const state = location.state as { quoteRequestId?: string; publicToken?: string; clientName?: string } | null;
   const clientName = state?.clientName || 'Cliente';
 
-  const [tenantPhone, setTenantPhone] = useState<string>('+51947112803');
+  const [tenantPhone, setTenantPhone] = useState<string>('');
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/v1/public/tenant/settings?slug=lrimprenta')
-      .then(res => res.json())
+    // Usamos la función centralizada para obtener los datos del tenant
+    fetchTenantSettings()
       .then(data => {
         if (data.whatsapp) setTenantPhone(data.whatsapp);
       })
-      .catch(() => {});
+      .catch(err => console.error('Error al obtener el teléfono del tenant:', err));
   }, []);
 
   if (!state?.publicToken) {
@@ -29,9 +30,10 @@ export default function Thanks() {
     );
   }
 
-  const pdfLink = `https://itshabackend-production.up.railway.app/api/v1/public/quotes/${state.publicToken}/pdf`;
+  const backendUrl = import.meta.env.VITE_BACKEND_PUBLIC_URL || 'https://itshabackend-production.up.railway.app';
+  const pdfLink = `${backendUrl}/api/v1/public/quotes/${state.publicToken}/pdf`;
   const whatsappUrl = `https://wa.me/${tenantPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
-    `¡Hola! Soy ${clientName} 👋\n\nAcabo de enviar mi cotización desde el catálogo web.\nAquí está mi PDF con los productos que solicité:\n📄 ${pdfLink}\n\nMe pueden contactar a este número para coordinar el pedido.\n¡Gracias!`
+    `Hola, soy ${clientName}. Acabo de enviar una solicitud de cotización desde el catálogo web.\n\nPuedes ver el detalle completo aquí:\n${pdfLink}\n\nQuedo atento a tu respuesta. ¡Gracias!`
   )}`;
 
   return (

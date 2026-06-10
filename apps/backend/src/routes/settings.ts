@@ -79,10 +79,10 @@ router.put('/', async (req: Request, res: Response) => {
     if (show_cart_total !== undefined) {
       updateData.show_cart_total = show_cart_total;
     }
-    if (facebook_url !== undefined) updateData.facebook_url = facebook_url;
-    if (instagram_url !== undefined) updateData.instagram_url = instagram_url;
-    if (tiktok_url !== undefined) updateData.tiktok_url = tiktok_url;
-    if (address !== undefined) updateData.address = address;
+    if (facebook_url !== undefined) updateData.facebook_url = facebook_url || null;
+    if (instagram_url !== undefined) updateData.instagram_url = instagram_url || null;
+    if (tiktok_url !== undefined) updateData.tiktok_url = tiktok_url || null;
+    if (address !== undefined) updateData.address = address || null;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({

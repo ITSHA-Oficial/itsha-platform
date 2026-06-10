@@ -22,9 +22,18 @@ export async function processRebuildCatalog(tenantId: string, triggeredBy: strin
     const jsonString = JSON.stringify(catalogData);
     const checksum = createHash('sha256').update(jsonString).digest('hex');
 
+    // Obtener slug del tenant
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('slug')
+      .eq('id', tenantId)
+      .single();
+
+    if (tenantError || !tenant) throw new Error(`Tenant no encontrado: ${tenantId}`);
+
     // 4. Subir a Storage
     const timestamp = Date.now();
-    const filePath = `catalogs/lrimprenta/catalog_v${timestamp}.json`;
+    const filePath = `catalogs/${tenant.slug}/catalog_v${timestamp}.json`;
 
     const { error: uploadError } = await supabase.storage
       .from('catalogs')
