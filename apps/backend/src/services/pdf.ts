@@ -14,6 +14,7 @@ export interface QuoteData {
   logoUrl?: string | null;
   primaryColor?: string | null;
   whatsapp?: string | null;
+  showPrices?: boolean;
 }
 
 export async function generateQuotePDF(data: QuoteData): Promise<Buffer> {
@@ -99,16 +100,26 @@ export async function generateQuotePDF(data: QuoteData): Promise<Buffer> {
 
       doc.text(name.substring(0, 40), colX.producto, y, { width: 240 });
       doc.text(String(item.quantity), colX.cantidad, y);
-      doc.text(item.unit_price ? `S/ ${item.unit_price.toFixed(2)}` : 'N/A', colX.precio, y);
-      doc.text(item.total_price ? `S/ ${(item.total_price * item.quantity).toFixed(2)}` : 'N/A', colX.total, y);
+      // Mostrar precios solo si showPrices es true
+      if (data.showPrices !== false) {
+        doc.text(item.unit_price ? `S/ ${item.unit_price.toFixed(2)}` : 'N/A', colX.precio, y);
+        doc.text(item.total_price ? `S/ ${item.total_price.toFixed(2)}` : 'N/A', colX.total, y);
+      } else {
+        doc.text('No disponible', colX.precio, y);
+        doc.text('No disponible', colX.total, y);
+      }
       doc.moveDown(1.2);
     });
 
     doc.moveDown(1);
 
     // Total
-    const grandTotal = data.items.reduce((sum, i) => sum + (i.total_price || 0) * i.quantity, 0);
-    doc.fontSize(10).font('Helvetica-Bold').fillColor(primaryColor).text(`Total general: S/ ${grandTotal.toFixed(2)}`, { align: 'right' });
+    if (data.showPrices !== false) {
+      const grandTotal = data.items.reduce((sum, i) => sum + (i.total_price || 0), 0);
+      doc.fontSize(10).font('Helvetica-Bold').fillColor(primaryColor).text(`Total general: S/ ${grandTotal.toFixed(2)}`, { align: 'right' });
+    } else {
+      doc.fontSize(10).font('Helvetica-Bold').fillColor(primaryColor).text('Consulta el precio en WhatsApp', { align: 'right' });
+    }
     doc.moveDown(3);
 
     // Pie de página

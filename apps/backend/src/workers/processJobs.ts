@@ -57,7 +57,7 @@ export async function processNextJob(): Promise<boolean> {
         // Obtener los items
         const { data: items, error: itemsError } = await supabase
           .from('quote_items')
-          .select('quantity, unit_price, total_price, product_id, variant_id')
+          .select('id, quantity, unit_price, total_price, product_id, variant_id')
           .eq('quote_request_id', quoteId)
           .eq('tenant_id', job.tenant_id);
 
@@ -68,8 +68,9 @@ export async function processNextJob(): Promise<boolean> {
 
         console.log(`[Worker] ${items.length} items encontrados`);
 
-        // Enriquecer items con nombres de producto y variante
+        // Enriquecer items con nombres de producto, variante y precios reales
         const enrichedItems = await Promise.all(items.map(async (item: any) => {
+          // Obtener nombre del producto
           const { data: product } = await supabase
             .from('products')
             .select('name')
@@ -77,26 +78,49 @@ export async function processNextJob(): Promise<boolean> {
             .eq('tenant_id', job.tenant_id)
             .single();
 
-          const { data: variant } = item.variant_id ? await supabase
-            .from('variants')
-            .select('variant_signature')
-            .eq('id', item.variant_id)
-            .eq('tenant_id', job.tenant_id)
-            .single() : { data: null };
+          // Obtener variante si existe
+          let variantData: any = null;
+          if (item.variant_id) {
+            const { data: variant } = await supabase
+              .from('variants')
+              .select('variant_signature, price')
+              .eq('id', item.variant_id)
+              .eq('tenant_id', job.tenant_id)
+              .single();
+            variantData = variant;
+          }
+
+          // Calcular precios (el backend es la fuente de verdad)
+          const unit_price = variantData?.price || 0;
+          const total_price = unit_price * item.quantity;
 
           return {
+            product_id: item.product_id,
             product_name: product?.name || 'Producto desconocido',
-            variant_signature: variant?.variant_signature || null,
+            variant_signature: variantData?.variant_signature || null,
             quantity: item.quantity,
-            unit_price: item.unit_price,
-            total_price: item.total_price,
+            unit_price: unit_price,
+            total_price: total_price,
           };
         }));
+
+        // Actualizar los precios en quote_items para referencia futura
+        for (const enriched of enrichedItems) {
+          const item = items.find((i: any) => 
+            i.product_id === enriched.product_id && i.quantity === enriched.quantity
+          );
+          if (item) {
+            await supabase
+              .from('quote_items')
+              .update({ unit_price: enriched.unit_price, total_price: enriched.total_price })
+              .eq('id', item.id);
+          }
+        }
 
         // Obtener datos del tenant necesarios para el PDF
         const { data: tenant } = await supabase
           .from('tenants')
-          .select('slug, whatsapp, logo_url, primary_color')
+          .select('slug, whatsapp, logo_url, primary_color, show_prices')
           .eq('id', job.tenant_id)
           .single();
 
@@ -115,7 +139,8 @@ export async function processNextJob(): Promise<boolean> {
           ...pdfData,
           logoUrl: tenant.logo_url || null,
           primaryColor: tenant.primary_color || null,
-          whatsapp: tenant.whatsapp || null
+          whatsapp: tenant.whatsapp || null,
+          showPrices: tenant.show_prices !== false   // por defecto true si no está definido
         });
         console.log('[Worker] PDF generado correctamente');
 
