@@ -4,18 +4,12 @@ import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 import FeatureEditor from '../components/FeatureEditor';
 import VariantEditor from '../components/VariantEditor';
 import ImageUploader from '../components/ImageUploader';
-import useProducts from '../hooks/useProducts';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { products: allProducts, loading: productsLoading, fetchProducts } = useProducts(TENANT_SLUG);
 
-  // Cargar la lista completa de productos para la navegación
-  useEffect(() => {
-    fetchProducts(1, { limit: '500' });
-  }, [fetchProducts]);
-
+  // Estados para el detalle del producto
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,6 +25,33 @@ export default function ProductDetail() {
   const [categoryId, setCategoryId] = useState<string>('');
   const [categories, setCategories] = useState<any[]>([]);
 
+  // Estados para la navegación (lista completa de productos)
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+
+  // Cargar la lista completa de productos (solo una vez)
+  useEffect(() => {
+    let cancelled = false;
+    setListLoading(true);
+    fetch(`${API_URL}/api/v1/products?limit=500&is_active=true`, {
+      headers: { 'X-Tenant-Slug': TENANT_SLUG }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (!cancelled) {
+          setAllProducts(data.products || []);
+          setListLoading(false);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          console.error('Error al cargar lista de productos:', err);
+          setListLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
+  }, []);
+
   // Calcular producto anterior y siguiente
   const { prevProduct, nextProduct, currentIndex, totalProducts } = useMemo(() => {
     const sorted = [...allProducts].sort((a: any, b: any) => a.name.localeCompare(b.name));
@@ -43,7 +64,7 @@ export default function ProductDetail() {
     };
   }, [allProducts, id]);
 
-  // Cargar producto
+  // Cargar detalle del producto
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -114,7 +135,7 @@ export default function ProductDetail() {
     { id: 'images', label: 'Imágenes' },
   ];
 
-  if (loading || productsLoading) {
+  if (loading || listLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
