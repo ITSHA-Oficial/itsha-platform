@@ -22,6 +22,7 @@ export default function Home({ totalItems, cartOpen, onCartClick, onQuickAdd }: 
   const [lastQuery, setLastQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [socialLinks, setSocialLinks] = useState<any>({});
+  const [cartPulse, setCartPulse] = useState(false);
   const navigate = useNavigate();
 
   // Cargar configuración del tenant (redes sociales, logo, etc.)
@@ -53,6 +54,12 @@ export default function Home({ totalItems, cartOpen, onCartClick, onQuickAdd }: 
   const handleCategorySelect = (slug: string | null) => {
     setSelectedCategory(slug);
     applyFilters(slug, lastQuery);
+  };
+
+  const handleQuickAdd = (item: any) => {
+    onQuickAdd(item);
+    setCartPulse(true);
+    setTimeout(() => setCartPulse(false), 600);
   };
 
   const getMinPrice = (product: any) => {
@@ -128,7 +135,7 @@ export default function Home({ totalItems, cartOpen, onCartClick, onQuickAdd }: 
               </svg>
             </button>
             
-            <CartIcon totalItems={totalItems} isActive={cartOpen} onClick={onCartClick} />
+            <CartIcon totalItems={totalItems} isActive={cartOpen} onClick={onCartClick} pulse={cartPulse} />
           </div>
         </div>
 
@@ -172,7 +179,7 @@ export default function Home({ totalItems, cartOpen, onCartClick, onQuickAdd }: 
                 pricingMode={product.pricing_mode}
                 displayPriceMode={product.display_price_mode}
                 minPrice={getMinPrice(product)}
-                onQuickAdd={onQuickAdd}
+                onQuickAdd={handleQuickAdd}
               />
             ))}
           </div>

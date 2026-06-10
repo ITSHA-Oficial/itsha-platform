@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
@@ -9,7 +10,7 @@ interface ProductCardProps {
   pricingMode: 'explicit_variant' | 'dynamic_formula';
   displayPriceMode: 'hidden' | 'from_price' | 'exact' | 'contact_only';
   minPrice?: number;
-  onQuickAdd?: (product: any) => void; // Nueva prop
+  onQuickAdd?: (product: any) => void;
 }
 
 export default function ProductCard({
@@ -23,6 +24,7 @@ export default function ProductCard({
   minPrice,
   onQuickAdd
 }: ProductCardProps) {
+  const [added, setAdded] = useState(false);
   const placeholder = '/assets/placeholder.svg';
 
   const renderPrice = () => {
@@ -39,6 +41,28 @@ export default function ProductCard({
     return null;
   };
 
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onQuickAdd) {
+      onQuickAdd({
+        product_id: id,
+        sku,
+        product_name: name,
+        quantity: 1,
+        selected_options: {},
+        formula_inputs: null,
+        image_url: imageUrl,
+        variant_id: null,
+        unit_price: minPrice || null,
+        total_price: minPrice || null
+      });
+      // Animación de confirmación
+      setAdded(true);
+      setTimeout(() => setAdded(false), 600);
+    }
+  };
+
   return (
     <Link
       to={`/producto/${sku}`}
@@ -53,28 +77,23 @@ export default function ProductCard({
         />
         {onQuickAdd && (
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onQuickAdd({
-                product_id: id,
-                sku,
-                product_name: name,
-                quantity: 1,
-                selected_options: {},
-                formula_inputs: null,
-                image_url: imageUrl,
-                variant_id: null,
-                unit_price: minPrice || null,
-                total_price: minPrice || null
-              });
-            }}
-            className="absolute bottom-2 right-2 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white hover:shadow-md transition-all opacity-0 group-hover:opacity-100 active:opacity-100"
+            onClick={handleQuickAdd}
+            className={`absolute bottom-2 right-2 w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition-all duration-300 ${
+              added
+                ? 'bg-green-500 text-white scale-110'
+                : 'bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-md opacity-0 group-hover:opacity-100 active:opacity-100'
+            }`}
             title="Agregar al carrito"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
+            {added ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+            )}
           </button>
         )}
       </div>

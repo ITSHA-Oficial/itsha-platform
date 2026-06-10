@@ -2,15 +2,16 @@ interface CartIconProps {
   totalItems: number;
   onClick: () => void;
   isActive?: boolean;
+  pulse?: boolean; // Nueva prop
 }
 
-export default function CartIcon({ totalItems, onClick, isActive }: CartIconProps) {
+export default function CartIcon({ totalItems, onClick, isActive, pulse }: CartIconProps) {
   return (
     <button
       onClick={onClick}
       className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
         isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
-      }`}
+      } ${pulse ? 'animate-bounce' : ''}`}
       aria-label="Abrir carrito"
     >
       {/* Icono de bolsa de compras */}
