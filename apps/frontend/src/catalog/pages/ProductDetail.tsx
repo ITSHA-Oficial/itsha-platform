@@ -109,7 +109,7 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
       const imgs = product.images.map((i: any) => ({ url: i.url, alt_text: i.alt_text || product.name }));
       if (currentImage) {
         // Buscar si currentImage ya está en la lista, si no, añadirla al inicio
-        if (!imgs.some(i => i.url === currentImage)) {
+        if (!imgs.some((i: { url: string }) => i.url === currentImage)) {
           imgs.unshift({ url: currentImage, alt_text: product.name });
         }
       }
