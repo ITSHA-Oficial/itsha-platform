@@ -65,7 +65,7 @@ export default function useCart() {
     setItems([]);
   }, []);
 
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = items.length; // Cuenta productos distintos, no cantidades
 
   return { items, addItem, removeItem, updateQuantity, clearCart, totalItems };
 }
