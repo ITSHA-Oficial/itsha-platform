@@ -81,7 +81,7 @@ export default function SearchBar({ products = [], getProductUrl, onSearch, fetc
   }, []);
 
   const handleSelect = (product: Product) => {
-    setValue('');
+    // setValue('');
     setShowDropdown(false);
     if (getProductUrl) {
       window.location.href = getProductUrl(product);

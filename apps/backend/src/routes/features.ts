@@ -229,4 +229,80 @@ router.delete('/attributes/:id', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * PUT /api/v1/products/:productId/features/batch-sort
+ * Actualiza el sort_order de varias características a la vez.
+ * Body: { items: [{ id: string, sort_order: number }] }
+ */
+router.put('/products/:productId/features/batch-sort', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { productId } = req.params;
+    const { items } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'Se requiere un array de items con id y sort_order.' }
+      });
+    }
+
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({ error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere el header X-Tenant-Slug.' } });
+    }
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', tenantSlug)
+      .eq('active', true)
+      .single();
+
+    if (tenantError || !tenant) {
+      return res.status(404).json({ error: { code: 'TENANT_NOT_FOUND', message: 'El tenant no existe o está inactivo.' } });
+    }
+
+    // Validar que todos los IDs pertenecen a este producto y tenant
+    const ids = items.map((item: any) => item.id);
+    const { data: validFeatures, error: validError } = await supabase
+      .from('features')
+      .select('id')
+      .in('id', ids)
+      .eq('product_id', productId)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null);
+
+    if (validError || !validFeatures || validFeatures.length !== ids.length) {
+      return res.status(403).json({
+        error: { code: 'FORBIDDEN', message: 'Alguna característica no pertenece a este producto o tenant.' }
+      });
+    }
+
+    // Actualizar una por una (o en paralelo, pero no hay problema)
+    const updates = items.map((item: any) =>
+      supabase
+        .from('features')
+        .update({ sort_order: item.sort_order })
+        .eq('id', item.id)
+        .eq('tenant_id', tenant.id)
+    );
+
+    const results = await Promise.all(updates);
+    const errors = results.filter(r => r.error);
+    if (errors.length > 0) {
+      console.error('Errores en batch-sort:', errors);
+      return res.status(500).json({
+        error: { code: 'DB_ERROR', message: 'Error al actualizar algunos órdenes.' }
+      });
+    }
+
+    return res.json({ message: 'Órdenes actualizados correctamente.' });
+  } catch (err: any) {
+    console.error('Error en PUT /features/batch-sort:', err);
+    return res.status(500).json({
+      error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' }
+    });
+  }
+});
+
 export default router;

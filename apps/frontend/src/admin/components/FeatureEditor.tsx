@@ -45,6 +45,41 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
 
   useEffect(() => { fetchFeatures(); }, [productId]);
 
+  const persistOrder = async (updatedFeatures: Feature[]) => {
+    const items = updatedFeatures.map((f, index) => ({
+      id: f.id,
+      sort_order: index + 1 // órdenes 1,2,3... desde 1
+    }));
+    await fetch(`${API_URL}/api/v1/products/${productId}/features/batch-sort`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-Slug': TENANT_SLUG },
+      body: JSON.stringify({ items })
+    });
+  };
+
+  const moveFeature = async (index: number, direction: 'up' | 'down') => {
+    if (processingRef.current) return;
+    const newFeatures = [...features];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newFeatures.length) return;
+
+    // Intercambiar
+    [newFeatures[index], newFeatures[targetIndex]] = [newFeatures[targetIndex], newFeatures[index]];
+    setFeatures(newFeatures); // Optimistic UI
+
+    processingRef.current = true;
+    try {
+      await persistOrder(newFeatures);
+      await fetchFeatures(); // Refrescar para asegurar consistencia
+    } catch (err) {
+      console.error(err);
+      // Revertir en caso de error (volvemos a cargar del servidor)
+      await fetchFeatures();
+    } finally {
+      processingRef.current = false;
+    }
+  };
+
   const addFeature = async () => {
     if (!newFeatureName.trim() || processingRef.current) return;
     processingRef.current = true;
@@ -55,7 +90,7 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         body: JSON.stringify({ name: newFeatureName.trim(), sort_order: features.length + 1 })
       });
       setNewFeatureName('');
-      processingRef.current = false; // Desbloquear antes de recargar
+      processingRef.current = false;
       await fetchFeatures();
     } catch (err) {
       console.error(err);
@@ -74,7 +109,7 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         body: JSON.stringify({ value, sort_order: 1 })
       });
       setNewAttrValue(prev => ({ ...prev, [featureId]: '' }));
-      processingRef.current = false; // Desbloquear antes de recargar
+      processingRef.current = false;
       await fetchFeatures();
     } catch (err) {
       console.error(err);
@@ -90,7 +125,6 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
         method: 'DELETE',
         headers: { 'X-Tenant-Slug': TENANT_SLUG }
       });
-      // Desbloquear manualmente antes de recargar
       processingRef.current = false;
       await fetchFeatures();
     } catch (err) {
@@ -139,10 +173,35 @@ export default function FeatureEditor({ productId }: FeatureEditorProps) {
       {features.length === 0 ? (
         <p className="text-sm text-gray-400">Este producto no tiene características. Agrega una para empezar.</p>
       ) : (
-        features.map(feature => (
+        features.map((feature, index) => (
           <div key={feature.id} className="bg-gray-50 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-gray-800">{feature.name}</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="font-semibold text-gray-800">{feature.name}</h4>
+                {/* Botones de movimiento */}
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    onClick={() => moveFeature(index, 'up')}
+                    disabled={index === 0}
+                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed p-0.5 leading-none"
+                    title="Subir"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => moveFeature(index, 'down')}
+                    disabled={index === features.length - 1}
+                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed p-0.5 leading-none"
+                    title="Bajar"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
               <button onClick={() => deleteFeature(feature.id)} className="text-red-500 text-sm hover:underline">
                 Eliminar
               </button>
