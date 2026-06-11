@@ -145,16 +145,25 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
     if (processingRef.current) return;
     processingRef.current = true;
     try {
-      await fetch(`${API_URL}/api/v1/variants/${variantId}`, {
+      const res = await fetch(`${API_URL}/api/v1/variants/${variantId}`, {
         method: 'DELETE',
         headers: { 'X-Tenant-Slug': TENANT_SLUG }
       });
       processingRef.current = false;
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err?.error?.message || 'Error al eliminar la variante.');
+        setDeleteConfirmId(null);
+        return;
+      }
+
       setDeleteConfirmId(null);
       await fetchData();
     } catch (err) {
       console.error(err);
       processingRef.current = false;
+      alert('Error de conexión al intentar eliminar.');
     }
   };
 

@@ -229,4 +229,81 @@ router.put('/variants/:id/main', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * DELETE /api/v1/variants/:id
+ * Soft delete de una variante. También marca deleted_at en variant_attributes.
+ */
+router.delete('/variants/:id', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { id } = req.params;
+
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({
+        error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere el header X-Tenant-Slug.' }
+      });
+    }
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', tenantSlug)
+      .eq('active', true)
+      .single();
+
+    if (tenantError || !tenant) {
+      return res.status(404).json({
+        error: { code: 'TENANT_NOT_FOUND', message: 'El tenant no existe o está inactivo.' }
+      });
+    }
+
+    // Verificar que la variante existe y pertenece al tenant
+    const { data: variant, error: variantError } = await supabase
+      .from('variants')
+      .select('id, product_id')
+      .eq('id', id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null)
+      .single();
+
+    if (variantError || !variant) {
+      return res.status(404).json({
+        error: { code: 'VARIANT_NOT_FOUND', message: 'Variante no encontrada.' }
+      });
+    }
+
+    const now = new Date().toISOString();
+
+    // Soft delete en variant_attributes
+    const { error: vaError } = await supabase
+      .from('variant_attributes')
+      .update({ deleted_at: now })
+      .eq('variant_id', id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null);
+
+    if (vaError) throw vaError;
+
+    // Soft delete en variants
+    const { error: deleteError } = await supabase
+      .from('variants')
+      .update({ deleted_at: now, is_main: false })
+      .eq('id', id)
+      .eq('tenant_id', tenant.id);
+
+    if (deleteError) throw deleteError;
+
+    return res.json({
+      message: 'Variante eliminada correctamente.',
+      variant_id: id
+    });
+  } catch (err: any) {
+    console.error('Error en DELETE /variants/:id:', err);
+    return res.status(500).json({
+      error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' }
+    });
+  }
+});
+
 export default router;
