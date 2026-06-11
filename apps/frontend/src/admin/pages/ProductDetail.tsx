@@ -4,6 +4,7 @@ import { API_URL, TENANT_SLUG } from '../../catalog/utils/api';
 import FeatureEditor from '../components/FeatureEditor';
 import VariantEditor from '../components/VariantEditor';
 import ImageUploader from '../components/ImageUploader';
+import ProductSearchDropdown from '../components/ProductSearchDropdown';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -147,7 +148,6 @@ export default function ProductDetail() {
 
   return (
     <div>
-      {/* Encabezado limpio solo con navegación */}
       <div className="flex items-center justify-between mb-6">
         {/* Flecha izquierda: producto anterior */}
         <button
@@ -156,12 +156,16 @@ export default function ProductDetail() {
           className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-600"
           title={prevProduct ? `Anterior: ${prevProduct.name}` : 'No hay anterior'}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} >
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
-        <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
+        {/* Título + búsqueda predictiva */}
+        <div className="flex items-center gap-3 flex-1 justify-center min-w-0">
+          <h1 className="text-2xl font-bold text-gray-900 truncate">{product.name}</h1>
+          <ProductSearchDropdown products={allProducts} />
+        </div>
 
         {/* Flecha derecha: producto siguiente */}
         <button
@@ -170,7 +174,7 @@ export default function ProductDetail() {
           className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-600"
           title={nextProduct ? `Siguiente: ${nextProduct.name}` : 'No hay siguiente'}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} >
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </button>
