@@ -123,7 +123,7 @@ export default function SearchBar({
           onChange={handleChange}
           onFocus={handleFocus}
           placeholder="Buscar productos..."
-          className="w-full px-4 py-3.5 bg-gray-50 border-0 rounded-xl text-sm shadow-sm ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white focus:shadow-md transition-all min-h-[48px] placeholder-gray-400"
+          className="w-full px-4 py-3.5 bg-gray-100 border-0 rounded-xl text-sm shadow-sm ring-1 ring-gray-300 focus:ring-2 focus:ring-blue-500 focus:bg-white focus:shadow-md transition-all min-h-[48px] placeholder-gray-400"
         />
         {value && (
           <button
