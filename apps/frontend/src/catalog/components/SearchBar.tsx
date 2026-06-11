@@ -7,23 +7,30 @@ interface Product {
 }
 
 interface SearchBarProps {
-  products?: Product[];                    // Para búsqueda local
-  getProductUrl?: (product: Product) => string; // Para navegar al hacer clic
-  onSearch?: (query: string) => void;      // Para filtrar en tiempo real
-  fetchSuggestions?: (query: string) => Promise<Product[]>; // Para búsqueda remota
-  onSelectProduct?: (product: Product) => void; // Para manejar acciones extra al seleccionar
+  products?: Product[];
+  getProductUrl?: (product: Product) => string;
+  onSearch?: (query: string) => void;
+  fetchSuggestions?: (query: string) => Promise<Product[]>;
+  onSelectProduct?: (product: Product) => void;
 }
 
-export default function SearchBar({ products = [], getProductUrl, onSearch, fetchSuggestions, onSelectProduct }: SearchBarProps) {
+export default function SearchBar({
+  products = [],
+  getProductUrl,
+  onSearch,
+  fetchSuggestions,
+  onSelectProduct
+}: SearchBarProps) {
   const [value, setValue] = useState('');
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Efecto para obtener sugerencias (local o remoto)
+  // Efecto para obtener sugerencias sin forzar apertura
   useEffect(() => {
     const timer = setTimeout(async () => {
       const query = value.trim().toLowerCase();
+      // Notificar al padre para filtrar (siempre)
       if (onSearch) onSearch(query);
 
       if (query.length === 0) {
@@ -34,16 +41,15 @@ export default function SearchBar({ products = [], getProductUrl, onSearch, fetc
 
       let results: Product[] = [];
       if (fetchSuggestions) {
-        // Búsqueda remota (para admin)
         results = await fetchSuggestions(query);
       } else {
-        // Búsqueda local (para catálogo)
         results = products.filter(p =>
           p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query)
         );
       }
       setSuggestions(results.slice(0, 8));
-      setShowDropdown(results.length > 0);
+      // Solo mostrar dropdown si el input está enfocado
+      // El estado de foco lo manejamos con onFocus/onBlur en el input
     }, 300);
 
     return () => clearTimeout(timer);
@@ -60,10 +66,9 @@ export default function SearchBar({ products = [], getProductUrl, onSearch, fetc
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Cerrar dropdown con Escape o scroll
+  // Cerrar con Escape y con scroll (solo si el scroll no es del dropdown)
   useEffect(() => {
     const handleScroll = (event: Event) => {
-      // Si el scroll proviene del dropdown, NO cerrarlo
       if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
         return;
       }
@@ -81,7 +86,6 @@ export default function SearchBar({ products = [], getProductUrl, onSearch, fetc
   }, []);
 
   const handleSelect = (product: Product) => {
-    // setValue('');
     setShowDropdown(false);
     if (getProductUrl) {
       window.location.href = getProductUrl(product);
@@ -91,15 +95,35 @@ export default function SearchBar({ products = [], getProductUrl, onSearch, fetc
     }
   };
 
+  // Mostrar dropdown al enfocar si hay sugerencias
+  const handleFocus = () => {
+    if (suggestions.length > 0) {
+      setShowDropdown(true);
+    }
+  };
+
+  // Mostrar dropdown al cambiar texto si hay sugerencias
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value);
+    // Pequeño truco: después de un cambio, si hay sugerencias, abrir dropdown
+    // pero esperamos al efecto de sugerencias; podemos forzar apertura aquí
+    // pero el efecto ya se encargará después de 300ms. Para respuesta inmediata,
+    // podemos abrirlo si ya hay sugerencias (antes del debounce).
+    if (suggestions.length > 0) {
+      setShowDropdown(true);
+    }
+  };
+
   return (
     <div className="relative mb-4" ref={dropdownRef}>
       <div className="relative">
         <input
           type="text"
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={handleChange}
+          onFocus={handleFocus}
           placeholder="Buscar productos..."
-          className="w-full px-4 py-3.5 bg-white border-0 rounded-xl text-sm shadow-sm ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 focus:shadow-md transition-all min-h-[48px] placeholder-gray-400"
+          className="w-full px-4 py-3.5 bg-gray-50 border-0 rounded-xl text-sm shadow-sm ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white focus:shadow-md transition-all min-h-[48px] placeholder-gray-400"
         />
         {value && (
           <button
