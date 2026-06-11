@@ -1,7 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { getSupabaseClient } from '../db/supabase';
+import sharp from 'sharp';
+import multer from 'multer';
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
 
 router.post('/products/:productId/variants', async (req: Request, res: Response) => {
   try {
@@ -126,7 +129,8 @@ router.post('/products/:productId/variants', async (req: Request, res: Response)
         sku_variant: sku_variant || null,
         variant_signature: variantSignature,
         price,
-        min_quantity: min_quantity || 1
+        min_quantity: min_quantity || 1,
+        image_url: req.body.image_url || null
       })
       .select('id, product_id, sku_variant, variant_signature, price, min_quantity, is_active')
       .single();
@@ -303,6 +307,146 @@ router.delete('/variants/:id', async (req: Request, res: Response) => {
     return res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' }
     });
+  }
+});
+
+/**
+ * PUT /api/v1/variants/:id
+ * Actualiza campos editables de una variante (precio, min_quantity, image_url).
+ */
+router.put('/variants/:id', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { id } = req.params;
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({ error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere el header X-Tenant-Slug.' } });
+    }
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', tenantSlug)
+      .eq('active', true)
+      .single();
+
+    if (tenantError || !tenant) {
+      return res.status(404).json({ error: { code: 'TENANT_NOT_FOUND', message: 'El tenant no existe o está inactivo.' } });
+    }
+
+    // Verificar que la variante pertenece al tenant
+    const { data: variant, error: variantError } = await supabase
+      .from('variants')
+      .select('id')
+      .eq('id', id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null)
+      .single();
+
+    if (variantError || !variant) {
+      return res.status(404).json({ error: { code: 'VARIANT_NOT_FOUND', message: 'Variante no encontrada.' } });
+    }
+
+    const updateData: any = {};
+    if (req.body.price !== undefined) updateData.price = req.body.price;
+    if (req.body.min_quantity !== undefined) updateData.min_quantity = req.body.min_quantity;
+    if (req.body.image_url !== undefined) updateData.image_url = req.body.image_url;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'No hay campos para actualizar.' } });
+    }
+
+    const { error: updateError } = await supabase
+      .from('variants')
+      .update(updateData)
+      .eq('id', id)
+      .eq('tenant_id', tenant.id);
+
+    if (updateError) throw updateError;
+
+    return res.json({ message: 'Variante actualizada correctamente.' });
+  } catch (err: any) {
+    console.error('Error en PUT /variants/:id:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' } });
+  }
+});
+
+/**
+ * POST /api/v1/variants/:id/image
+ * Sube una imagen para la variante y la asigna a image_url.
+ */
+router.post('/variants/:id/image', upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { id } = req.params;
+
+    const tenantSlug = req.headers['x-tenant-slug'] as string;
+    if (!tenantSlug) {
+      return res.status(400).json({
+        error: { code: 'MISSING_TENANT_SLUG', message: 'Se requiere el header X-Tenant-Slug.' }
+      });
+    }
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', tenantSlug)
+      .eq('active', true)
+      .single();
+
+    if (tenantError || !tenant) {
+      return res.status(404).json({
+        error: { code: 'TENANT_NOT_FOUND', message: 'El tenant no existe o está inactivo.' }
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        error: { code: 'NO_FILE', message: 'No se ha subido ninguna imagen.' }
+      });
+    }
+
+    const { data: variant, error: variantError } = await supabase
+      .from('variants')
+      .select('id, product_id')
+      .eq('id', id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null)
+      .single();
+
+    if (variantError || !variant) {
+      return res.status(404).json({ error: { code: 'VARIANT_NOT_FOUND', message: 'Variante no encontrada.' } });
+    }
+
+    const processedBuffer = await sharp(req.file.buffer)
+      .resize(1000, 1000, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    const filePath = `${tenantSlug}/${variant.product_id}/${id}.webp`;
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, processedBuffer, { contentType: 'image/webp', upsert: true });
+
+    if (uploadError) {
+      return res.status(500).json({ error: { code: 'STORAGE_ERROR', message: 'Error al subir la imagen.' } });
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    const { error: updateError } = await supabase
+      .from('variants')
+      .update({ image_url: publicUrlData.publicUrl })
+      .eq('id', id);
+
+    if (updateError) throw updateError;
+
+    return res.json({ url: publicUrlData.publicUrl });
+  } catch (err: any) {
+    console.error('Error en POST /variants/:id/image:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' } });
   }
 });
 

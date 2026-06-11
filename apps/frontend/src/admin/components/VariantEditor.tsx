@@ -22,6 +22,7 @@ interface Variant {
   min_quantity: number;
   is_active: boolean;
   is_main: boolean;
+  image_url: string | null;
   attributes: { feature_name: string; value: string }[];
 }
 
@@ -42,6 +43,7 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
   // Edición inline
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState('');
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [editMinQty, setEditMinQty] = useState('');
 
   // Confirmación de eliminación
@@ -106,6 +108,7 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
     setEditingId(variant.id);
     setEditPrice(variant.price.toString());
     setEditMinQty(variant.min_quantity.toString());
+    setEditImageUrl(variant.image_url || null);
     setDeleteConfirmId(null); // cerrar confirmación de borrado si estuviera abierta
   };
 
@@ -124,7 +127,7 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
       const res = await fetch(`${API_URL}/api/v1/variants/${variantId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Tenant-Slug': TENANT_SLUG },
-        body: JSON.stringify({ price: newPrice, min_quantity: newMin })
+        body: JSON.stringify({ price: newPrice, min_quantity: newMin, image_url: editImageUrl })
       });
       if (res.ok) {
         setEditingId(null);
@@ -213,6 +216,48 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
                           className="w-20 px-2 py-1 border border-gray-200 rounded text-sm"
                         />
                       </div>
+                      {/* Sección de subida de imagen */}
+                      <div>
+                        <label className="text-xs text-gray-500">Imagen</label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => document.getElementById(`variant-img-${variant.id}`)?.click()}
+                            className="px-2 py-1 bg-gray-100 text-xs rounded-lg hover:bg-gray-200"
+                          >
+                            {editImageUrl ? 'Cambiar' : 'Subir'}
+                          </button>
+                          {editImageUrl && (
+                            <img src={editImageUrl} alt="preview" className="h-8 w-8 object-cover rounded" />
+                          )}
+                          <input
+                            id={`variant-img-${variant.id}`}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              formData.append('variant_id', variant.id);
+                              try {
+                                const res = await fetch(`${API_URL}/api/v1/variants/${variant.id}/image`, {
+                                  method: 'POST',
+                                  headers: { 'X-Tenant-Slug': TENANT_SLUG },
+                                  body: formData
+                                });
+                                if (res.ok) {
+                                  const data = await res.json();
+                                  setEditImageUrl(data.url);
+                                  setVariants(prev => prev.map(v => v.id === variant.id ? { ...v, image_url: data.url } : v));
+                                } else {
+                                  const err = await res.json();
+                                  alert(err?.error?.message || 'Error al subir imagen.');
+                                }
+                              } catch (err) { console.error(err); alert('Error de conexión.'); }
+                            }} />
+                        </div>
+                      </div>
                       <div className="flex gap-2 ml-auto">
                         <button
                           onClick={() => saveEditing(variant.id)}
@@ -255,6 +300,9 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
                       {variant.is_main && (
                         <span className="text-yellow-500 text-lg" title="Variante principal">⭐</span>
                       )}
+                      {variant.image_url && (
+                        <img src={variant.image_url} alt="Variant" className="h-8 w-8 object-cover rounded" />
+                      )}
                       <div>
                         <p className="text-sm font-medium text-gray-800">
                           {variant.attributes.map(a => `${a.feature_name}: ${a.value}`).join(' | ')}
@@ -265,6 +313,13 @@ export default function VariantEditor({ productId }: VariantEditorProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => startEditing(variant)} // Transiciona a modo edición para subir la imagen
+                        className="px-2 py-1 bg-gray-100 text-xs rounded-lg hover:bg-gray-200"
+                        title={variant.image_url ? 'Cambiar imagen de la variante' : 'Subir imagen para la variante'}
+                      >
+                        {variant.image_url ? 'Cambiar foto' : 'Subir foto'}
+                      </button>
                       <button
                         onClick={() => startEditing(variant)}
                         className="text-blue-500 text-sm hover:underline"

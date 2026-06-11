@@ -25,6 +25,7 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
   const [showSearch, setShowSearch] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [showPrices, setShowPrices] = useState(true);
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
 
   // 1. Hooks incondicionales al inicio
   useEffect(() => {
@@ -58,6 +59,7 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
   useEffect(() => {
     if (!product) {
       setCalculatedPrice(null);
+      setCurrentImage(null);
       return;
     }
     const variant = product.variants?.find((v: any) => {
@@ -66,6 +68,8 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
       return v.attributes.every((a: any) => selectedOptions[a.feature_name] === a.value);
     });
     setCalculatedPrice(variant?.price || null);
+    // Imagen: la de la variante, o la principal del producto, o placeholder
+    setCurrentImage(variant?.image_url || product.primary_image_url || null);
   }, [selectedOptions, product]);
 
   // 4. Renderizado condicional (sin hooks debajo)
@@ -97,9 +101,22 @@ export default function ProductDetail({ onAddToCart, totalItems, onCartClick }: 
   }
 
   const placeholder = '/assets/placeholder.svg';
-  const productImages = product.images?.length
-    ? product.images.map((img: any) => ({ url: img.url, alt_text: img.alt_text || product.name }))
-    : [{ url: product.primary_image_url || placeholder, alt_text: product.name }];
+  const productImages = (() => {
+    const img = currentImage || product.primary_image_url || placeholder;
+    // Si hay múltiples imágenes del producto, las mostramos igualmente, pero la principal será la de la variante si existe
+    if (product.images?.length) {
+      // Reemplazar la primera imagen (o la principal) por currentImage
+      const imgs = product.images.map((i: any) => ({ url: i.url, alt_text: i.alt_text || product.name }));
+      if (currentImage) {
+        // Buscar si currentImage ya está en la lista, si no, añadirla al inicio
+        if (!imgs.some(i => i.url === currentImage)) {
+          imgs.unshift({ url: currentImage, alt_text: product.name });
+        }
+      }
+      return imgs;
+    }
+    return [{ url: img, alt_text: product.name }];
+  })();
 
   const handleAddToCart = () => {
     const variant = product.variants?.find((v: any) => {
